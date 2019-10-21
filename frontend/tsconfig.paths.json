@@ -1,0 +1,12 @@
+{
+    "compilerOptions": {
+      "baseUrl": "src",
+      "paths": {
+        "@models/*": ["models/*"],
+        "@components/*": ["components/*"],
+        "@redux/*": ["redux/*"],
+        "@api/*": ["api/*"],
+        "@config": ["config"]
+      }
+    }
+  }

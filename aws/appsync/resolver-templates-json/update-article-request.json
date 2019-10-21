@@ -1,0 +1,22 @@
+{
+    "version" : "2017-02-28",
+    "operation" : "UpdateItem",
+    "key": {
+        "id" : { "S" : "${context.arguments.id}" }
+    },
+    "update" : {
+        "expression" : "SET #article = :article",
+        "expressionNames" : {
+            "#article" : "article"
+        },
+        "expressionValues" : {
+            ":article" : { "M" : $util.dynamodb.toMapValuesJson($context.arguments.article)}
+        }
+    },
+    "condition" : {
+        "expression" : "secretId = :secretId",
+        "expressionValues" : {
+            ":secretId" : { "S" : "${context.arguments.secretId}" }
+        }
+    }
+}

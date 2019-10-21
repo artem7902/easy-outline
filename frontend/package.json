@@ -1,0 +1,58 @@
+{
+  "name": "frontend",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@types/jest": "24.0.19",
+    "@types/node": "12.11.1",
+    "@types/react": "16.9.9",
+    "@types/react-dom": "16.9.2",
+    "aws-amplify": "^1.2.2",
+    "aws-appsync": "^2.0.1",
+    "element-react": "^1.4.34",
+    "element-theme-default": "^1.4.13",
+    "graphql-tag": "^2.10.1",
+    "react": "^16.10.2",
+    "react-dom": "^16.10.2",
+    "react-hot-loader": "^4.12.15",
+    "react-redux": "^7.1.1",
+    "react-router-dom": "^5.1.2",
+    "react-scripts": "3.2.0",
+    "react-toastify": "^5.4.0",
+    "redux": "^4.0.4",
+    "redux-thunk": "^2.3.0",
+    "typescript": "3.6.4",
+    "validate.js": "^0.13.1",
+    "validator": "^11.1.0"
+  },
+  "scripts": {
+    "start": "react-app-rewired start",
+    "build": "react-app-rewired build",
+    "test": "react-app-rewired test --env=jsdom",
+    "eject": "react-app-rewired eject",
+    "format": "prettier --write 'src/**/*.ts*'"
+  },
+  "eslintConfig": {
+    "extends": "react-app"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "@types/react-redux": "^7.1.4",
+    "@types/react-router-dom": "^5.1.0",
+    "@types/react-toastify": "^4.0.2",
+    "@types/validator": "^10.11.3",
+    "prettier": "1.18.2",
+    "react-app-rewired": "^2.1.3"
+  }
+}

@@ -1,0 +1,44 @@
+schema {
+    query:Query
+    mutation: Mutation
+    subscription: Subscription
+}
+
+type Query {
+    getPublicArticle(id: String!): OutlineRecord
+}
+type Subscription {
+
+}
+
+type Mutation {
+    addArticle(url: String!): OutlineSecretRecord
+    updateArticle(id: String!, secretId: String!, article: ArticleInput!): OutlineSecretRecord
+}
+
+type Article {
+    title: String
+    originalText: String
+    authors: String
+    publishDate: String
+}
+
+type OutlineRecord {
+    id: String!
+    article: Article
+    createdAt: Int
+}
+
+type OutlineSecretRecord {
+    id: String!
+    secretId: String!
+    article: Article
+    createdAt: Int
+}
+
+input ArticleInput {
+  title: String
+  originalText: String
+  authors: String
+  publishDate: String
+}
