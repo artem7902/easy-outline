@@ -1,18 +1,17 @@
-import { Article } from "@models/api";
+import { IArticle } from "@models/api/IArticle";
 
-export enum ProcessStatus {
-  RUNNING,
-  FINISHED
+export enum ProcessNames {
+  SavingArticle = "SavingArticle",
 }
 
-export interface Process {
-  name: string;
-  status: ProcessStatus;
+export interface Process<R = any> {
+  name: ProcessNames;
+  running: boolean;
   error?: string | Object;
-  result?: string | Object | Array<any>;
+  result?: R;
 }
 
 export interface ReduxState {
-  article?: Article;
+  article?: IArticle;
   processes: Process[];
 }

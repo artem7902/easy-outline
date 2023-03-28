@@ -7,6 +7,8 @@ export const addArticle = gql`
       article {
         title
         originalText
+        originalHtml
+        html
         authors
         publishDate
       }
@@ -14,21 +16,19 @@ export const addArticle = gql`
   }
 `;
 
-/*export const updateArticle  = (id: string, secretId: string) => `
-     mutation Mutation {
-        updateArticle(url: "${url}") 
-           {
-             id
-             secretId
-             article{
-                title 
-                originalText
-                authors
-                publishDate
-             }
-           }
-        }
-`
-
-updateArticle(id: String!, secretId: String!, article: ArticleInput!)
-*/
+export const updateArticle = gql`
+  mutation Mutation($id: String!, $secretId: String!, $html: String!) {
+    updateArticle(id: $id, secretId: $secretId, html: $html) {
+      id
+      secretId
+      article {
+        title
+        originalText
+        originalHtml
+        html
+        authors
+        publishDate
+      }
+    }
+  }
+`;

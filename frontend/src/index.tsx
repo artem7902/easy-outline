@@ -1,18 +1,34 @@
 import React from "react";
-import ReactDOM from "react-dom";
+import { createRoot } from "react-dom/client";
 import { Provider } from "react-redux";
+
+import { CacheProvider } from "@emotion/react";
+import createCache from "@emotion/cache";
+import { ThemeProvider } from "@mui/material/styles";
+
+import { theme } from "./theme";
 
 import App from "./App";
 import * as serviceWorker from "./serviceWorker";
-import store from "./redux/store";
+import { store } from "./redux/store";
 
 import "./index.css";
 
-ReactDOM.render(
+const root = createRoot(document.getElementById("root") as HTMLElement);
+
+export const muiCache = createCache({
+  key: "mui",
+  prepend: true,
+});
+
+root.render(
   <Provider store={store}>
-    <App />
-  </Provider>,
-  document.getElementById("root")
+    <CacheProvider value={muiCache}>
+      <ThemeProvider theme={theme}>
+        <App />
+      </ThemeProvider>
+    </CacheProvider>
+  </Provider>
 );
 
 // If you want your app to work offline and load faster, you can change

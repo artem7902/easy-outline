@@ -1,129 +1,143 @@
-import React from "react";
-import { connect } from "react-redux";
-import { Button, Input, Form } from "element-react";
+import React, { useCallback, useEffect, useState } from "react";
+import { Box, TextField } from "@mui/material";
+import LoadingButton from "@mui/lab/LoadingButton";
+import { makeStyles } from "tss-react/mui";
 import validator from "validator";
 import { toast } from "react-toastify";
 
-//models
-import { ThunkDispatch } from "redux-thunk";
-import { ReduxState, Process, ProcessStatus } from "@models/redux";
-import { Article } from "@models/api";
+import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+
+import * as reduxSelectors from "@redux/selectors";
 
 import * as actions from "@redux/actions";
 
+import { useAppDispatch } from "@hooks";
+
 import logo from "../../logo.png";
-import "./index.css";
 
-interface EnterLinkProps {
-  dispatch: ThunkDispatch<any, any, any>;
-  article: Article | undefined;
-  addArticleProcess: Process | undefined;
-}
+const VALIDATION_RULES = {
+  articleUrl: {
+    errorMessage: "Please insert a valid URL",
+    validator: (value: string) => !value || validator.isURL(value),
+  },
+};
 
-class EnterLink extends React.Component<EnterLinkProps> {
-  state = {
-    form: {
-      articleUrl: ""
-    },
-    rules: {
-      articleUrl: [
-        {
-          message: "Please insert a valid URL",
-          trigger: "change",
-          validator: (rule: Object, value: string) =>
-            !!value && validator.isURL(value)
-        }
-      ]
-    },
-    sendingInProcess: false
-  };
-  form: any = React.createRef();
+const useStyles = makeStyles()((theme) => ({
+  root: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    height: "100%",
+  },
+  logo: {
+    width: "95vw",
+    maxWidth: "700px",
+    marginTop: "20vh",
+  },
+  form: {
+    marginTop: theme.spacing(5),
+    width: "100vw",
+    display: "flex",
+    justifyContent: "center",
+  },
+  urlInput: {
+    width: 500,
+  },
+  createOutlineButton: {
+    marginLeft: theme.spacing(2),
+    height: 56
+  },
+}));
 
-  onChange(key: string, value: any) {
-    this.setState({
-      form: Object.assign({}, this.state.form, { [key]: value })
-    });
-  }
-  
-  handleSubmit(e: any) {
-    e.preventDefault();
-    this.form.current.validate((valid: boolean) => {
-      if (valid) {
-        console.log("submit!");
-        this.setState({
-          sendingInProcess: true
-        });
-        this.props.dispatch(
-          actions.generateAndAddArticle(this.state.form.articleUrl)
+const EnterLink = () => {
+  // Styles
+  const { classes } = useStyles();
+
+  // Redux dispatch
+  const dispatch = useAppDispatch();
+
+  // Router Navigate
+  const navigate = useNavigate();
+
+  // State variables
+  const [articleUrl, setArticleUrl] = useState("");
+  const [isArticleUrlValid, setIsArticleUrlValid] = useState(true);
+
+  // Redux variables
+  const {
+    running: isSavingArticle,
+    error: savingArticleError,
+    result: savingArticleResult,
+  } = useSelector(reduxSelectors.savingArticleProcess());
+
+  // Callbacks
+  const onUrlFieldChange: React.ChangeEventHandler<HTMLInputElement> =
+    useCallback(
+      (event) => {
+        setArticleUrl(event.target.value);
+        setIsArticleUrlValid(
+          VALIDATION_RULES.articleUrl.validator(event.target.value)
         );
-      } else {
-        console.log("error submit!!");
-        return false;
-      }
-    });
-  }
-
-  componentDidUpdate(prevProps: EnterLinkProps) {
-    if (
-      !!prevProps.addArticleProcess &&
-      prevProps.addArticleProcess.status === ProcessStatus.RUNNING &&
-      (!!this.props.addArticleProcess &&
-        this.props.addArticleProcess.status === ProcessStatus.FINISHED)
-    ) {
-      this.setState({
-        sendingInProcess: false
-      });
-      if (!!this.props.addArticleProcess.error) {
-        toast(this.props.addArticleProcess.error, {
-          type: "error",
-          className: "toast-notification"
-        });
-      } else {
-      }
+      },
+      [dispatch]
+    );
+  const onCreateOutlineClick = useCallback(() => {
+    if (articleUrl && isArticleUrlValid) {
+      dispatch(actions.generateAndAddArticle(articleUrl));
+    } else {
+      return false;
     }
-  }
+  }, [dispatch, isArticleUrlValid, articleUrl]);
 
-  render() {
-    return (
-      <div className="enter-link-wrapper">
-        <img
-          style={{ width: "95vw", maxWidth: "700px" }}
-          src={logo}
-          alt="logo"
+  useEffect(() => {
+    if (!isSavingArticle && savingArticleError) {
+      toast(String(savingArticleError), {
+        type: "error",
+        className: "toast-notification",
+      });
+    } else if (!isSavingArticle && savingArticleResult) {
+      navigate(
+        `/articles/${savingArticleResult.addArticle.id}/${savingArticleResult.addArticle.secretId}`
+      );
+    }
+  }, [isSavingArticle, savingArticleResult, savingArticleError]);
+
+  return (
+    <div className={classes.root}>
+      <img className={classes.logo} src={logo} alt="logo" />
+      <Box
+        className={classes.form}
+        component="form"
+        noValidate
+        autoComplete="off"
+      >
+        <TextField
+          className={classes.urlInput}
+          label="Instert article URL here"
+          variant="outlined"
+          value={articleUrl}
+          onChange={onUrlFieldChange}
+          autoFocus
+          error={!isArticleUrlValid}
+          disabled={isSavingArticle}
+          helperText={
+            !isArticleUrlValid && VALIDATION_RULES.articleUrl.errorMessage
+          }
         />
-        <Form
-          ref={this.form}
-          className="en-US"
-          model={this.state.form}
-          rules={this.state.rules}
-        >
-          <Form.Item className="article-url-form-item" prop="articleUrl">
-            <Input
-              className="article-url-input"
-              value={this.state.form.articleUrl}
-              onChange={this.onChange.bind(this, "articleUrl")}
-              placeholder="Instert article URL here"
-              autoFocus
-            />
-          </Form.Item>
-        </Form>
-        <Button
-          className="create-outline-button"
-          type="primary"
+        <LoadingButton
+          className={classes.createOutlineButton}
           size="large"
-          onClick={this.handleSubmit.bind(this)}
-          loading={this.state.sendingInProcess}
+          variant="contained"
+          onClick={onCreateOutlineClick}
+          loading={isSavingArticle}
+          disabled={isSavingArticle || !isArticleUrlValid || !articleUrl  }
         >
           Create Outline
-        </Button>
-      </div>
-    );
-  }
-}
+        </LoadingButton>
+      </Box>
+    </div>
+  );
+};
 
-export default connect((state: ReduxState) => ({
-  article: state.article,
-  addArticleProcess: state.processes.find(
-    proc => proc.name === actions.actionTypes.ADD_ARTICLE
-  )
-}))(EnterLink);
+export default EnterLink;

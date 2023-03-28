@@ -7,7 +7,8 @@ module.exports = function override(config) {
     '@components': path.resolve(__dirname, 'src/components'),
     '@redux': path.resolve(__dirname, 'src/redux'),
     '@api': path.resolve(__dirname, 'src/api'),
-    '@config': path.resolve(__dirname, 'src/config')
+    '@config': path.resolve(__dirname, 'src/config'),
+    '@hooks': path.resolve(__dirname, 'src/hooks')
 },
   };
 

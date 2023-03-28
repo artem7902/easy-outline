@@ -1,4 +1,4 @@
-import cdk = require('@aws-cdk/core');
+import cdk = require('aws-cdk-lib');
 
 export const STACK_NAME = () => `outline-like-stack-${!!process.env.STAGE ? !!process.env.STAGE : "dev"}`;
 

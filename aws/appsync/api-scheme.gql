@@ -1,5 +1,5 @@
 schema {
-    query:Query
+    query: Query
     mutation: Mutation
     subscription: Subscription
 }
@@ -7,20 +7,24 @@ schema {
 type Query {
     getPublicArticle(id: String!): OutlineRecord
 }
+
 type Subscription {
 
 }
 
 type Mutation {
     addArticle(url: String!): OutlineSecretRecord
-    updateArticle(id: String!, secretId: String!, article: ArticleInput!): OutlineSecretRecord
+    updateArticle(id: String!, secretId: String!, html: String!): OutlineSecretRecord
 }
 
 type Article {
     title: String
     originalText: String
+    originalHtml: String
+    html: String
     authors: String
     publishDate: String
+    sourceUrl: String
 }
 
 type OutlineRecord {

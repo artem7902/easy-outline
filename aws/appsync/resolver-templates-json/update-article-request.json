@@ -5,12 +5,13 @@
         "id" : { "S" : "${context.arguments.id}" }
     },
     "update" : {
-        "expression" : "SET #article = :article",
+        "expression" : "SET #article.#html = :html",
         "expressionNames" : {
-            "#article" : "article"
+            "#article": "article",
+            "#html": "html"
         },
         "expressionValues" : {
-            ":article" : { "M" : $util.dynamodb.toMapValuesJson($context.arguments.article)}
+            ":html" : { "S": $util.toJson($context.arguments.html) }
         }
     },
     "condition" : {

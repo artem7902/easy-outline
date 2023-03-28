@@ -6,7 +6,8 @@
         "@components/*": ["components/*"],
         "@redux/*": ["redux/*"],
         "@api/*": ["api/*"],
-        "@config": ["config"]
+        "@config": ["config/*"],
+        "@hooks": ["hooks"]
       }
     }
   }

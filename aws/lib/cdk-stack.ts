@@ -1,17 +1,21 @@
 import * as fs from "fs"
-import cdk = require('@aws-cdk/core');
-import s3 = require('@aws-cdk/aws-s3');
-import iam = require('@aws-cdk/aws-iam');
-import cloudfront = require('@aws-cdk/aws-cloudfront');
-import dynamodb = require('@aws-cdk/aws-dynamodb');
-import appsync = require('@aws-cdk/aws-appsync');
-import lambda = require('@aws-cdk/aws-lambda')
+import cdk = require('aws-cdk-lib');
+import s3 = require('aws-cdk-lib/aws-s3');
+import iam = require('aws-cdk-lib/aws-iam');
+import cloudfront = require('aws-cdk-lib/aws-cloudfront');
+import dynamodb = require('aws-cdk-lib/aws-dynamodb');
+import appsync = require('aws-cdk-lib/aws-appsync');
+import lambda = require('aws-cdk-lib/aws-lambda');
+import { PythonFunction } from '@aws-cdk/aws-lambda-python-alpha';
+
+import { Construct } from 'constructs';
+
 import * as config from "../config";
 import * as resolverTemplates from "../appsync/resolver-templates";
 
 
 export class CdkStack extends cdk.Stack {
-  constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
+  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
     // define input params 
@@ -76,6 +80,24 @@ export class CdkStack extends cdk.Stack {
     */
     // end website config block
 
+    // Lambda
+
+    const processingLambdaBucket = new s3.Bucket(this, "ProcessingLambdaBucket");
+
+    const processingLambda =  new PythonFunction(this, 'ProcessingLambda', {
+      entry: __dirname.split("/").slice(0, -1).join("/") + `/lambda`,
+      runtime: lambda.Runtime.PYTHON_3_7,
+      index: 'index.py',
+      handler: 'main',
+      environment: {
+        BUCKET: processingLambdaBucket.bucketName
+      },
+      timeout: cdk.Duration.minutes(1),
+    });
+
+
+    processingLambdaBucket.grantReadWrite(processingLambda);
+
     // DynamoDB
 
     const articlesDynamodbTable =  new dynamodb.Table(this, "ArticlesDynamodbTable", {
@@ -87,39 +109,15 @@ export class CdkStack extends cdk.Stack {
         name: "id",
         type: dynamodb.AttributeType.STRING,
       },
-    });
-
-    // Lambda Layer
-
-    /*const processingLambdaLayer =  new lambda.LayerVersion(this, 'ProcessingLambdaLayer', {
-      code: lambda.Code.fromAsset(__dirname.split("/").slice(0, -1).join("/") + `/layer`),
-      compatibleRuntimes: [lambda.Runtime.PYTHON_3_7],
-      license: 'MIT'
-    });*/
+    });   
     
-
-    // Lambda
-
-    const processingLambdaBucket = new s3.Bucket(this, "ProcessingLambdaBucket");
-
-    const processingLambda =  new lambda.Function(this, "ProcessingLambda", {
-      code: lambda.Code.fromAsset(__dirname.split("/").slice(0, -1).join("/") + `/lambda`),
-      handler: 'src/index.main',
-      runtime: lambda.Runtime.PYTHON_3_7,
-      timeout: cdk.Duration.seconds(5),
-      //layers: [processingLambdaLayer],
-      environment: {
-        BUCKET: processingLambdaBucket.bucketName
-      }
-    });
-
-    processingLambdaBucket.grantReadWrite(processingLambda);
+    articlesDynamodbTable.grantReadWriteData(processingLambda)
 
     // AppSync
 
     const appsyncGraphQLApi = new appsync.CfnGraphQLApi(this, "AppsyncGraphQLApi", {
       name: config.APPSYNC_GRAPHQL_API_NAME(stage.valueAsString),
-      authenticationType: "API_KEY"
+      authenticationType: "API_KEY",
     });
 
     const fullAccessToArticlesDBPolicy = new iam.PolicyDocument({
@@ -182,7 +180,7 @@ export class CdkStack extends cdk.Stack {
    
     const appsyncGraphQLSchema = new appsync.CfnGraphQLSchema(this, "AppsyncGraphQLSchema", {
       apiId: appsyncGraphQLApi.attrApiId,
-      definition: fs.readFileSync(`${__dirname}/appsync/api-scheme.gql`).toString()
+      definition: fs.readFileSync(`${__dirname}/../appsync/api-scheme.gql`).toString()
     })
 
    // AppSync Resolvers 
@@ -196,8 +194,8 @@ export class CdkStack extends cdk.Stack {
       requestMappingTemplate: resolverTemplates.getPublicArticle.request,
       responseMappingTemplate: `$utils.toJson($context.result)`,
     })
-    appsyncGetPublicArticleResolver.addDependsOn(appsyncGraphQLSchema);
-    appsyncGetPublicArticleResolver.addDependsOn(appsyncGraphQLDynamoSource);
+    appsyncGetPublicArticleResolver.addDependency(appsyncGraphQLSchema);
+    appsyncGetPublicArticleResolver.addDependency(appsyncGraphQLDynamoSource);
 
     const appsyncUpdateArticleResolver = new appsync.CfnResolver(this, "UpdateArticleResolver", {
       apiId: appsyncGraphQLApi.attrApiId,
@@ -208,8 +206,8 @@ export class CdkStack extends cdk.Stack {
       requestMappingTemplate: resolverTemplates.updateArticle.request,
       responseMappingTemplate: `$utils.toJson($context.result)`,
     })
-    appsyncUpdateArticleResolver.addDependsOn(appsyncGraphQLSchema);
-    appsyncUpdateArticleResolver.addDependsOn(appsyncGraphQLDynamoSource);
+    appsyncUpdateArticleResolver.addDependency(appsyncGraphQLSchema);
+    appsyncUpdateArticleResolver.addDependency(appsyncGraphQLDynamoSource);
 
     const appsyncAddArticleResolver = new appsync.CfnResolver(this, "AddArticleResolver", {
       apiId: appsyncGraphQLApi.attrApiId,
@@ -221,8 +219,8 @@ export class CdkStack extends cdk.Stack {
       responseMappingTemplate: `$utils.toJson($context.result)`,
     })
     
-    appsyncAddArticleResolver.addDependsOn(appsyncGraphQLSchema);
-    appsyncAddArticleResolver.addDependsOn(appsyncGraphQLLambdaSource);
+    appsyncAddArticleResolver.addDependency(appsyncGraphQLSchema);
+    appsyncAddArticleResolver.addDependency(appsyncGraphQLLambdaSource);
 
    // AppSync API key 
    
