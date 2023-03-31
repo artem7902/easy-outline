@@ -5,14 +5,9 @@ import { makeStyles } from "tss-react/mui";
 import validator from "validator";
 import { toast } from "react-toastify";
 
-import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 
-import * as reduxSelectors from "@redux/selectors";
-
-import * as actions from "@redux/actions";
-
-import { useAppDispatch } from "@hooks";
+import { useAddArticle } from "@api/index";
 
 import logo from "../../logo.png";
 
@@ -46,16 +41,13 @@ const useStyles = makeStyles()((theme) => ({
   },
   createOutlineButton: {
     marginLeft: theme.spacing(2),
-    height: 56
+    height: 56,
   },
 }));
 
 const EnterLink = () => {
   // Styles
   const { classes } = useStyles();
-
-  // Redux dispatch
-  const dispatch = useAppDispatch();
 
   // Router Navigate
   const navigate = useNavigate();
@@ -64,44 +56,35 @@ const EnterLink = () => {
   const [articleUrl, setArticleUrl] = useState("");
   const [isArticleUrlValid, setIsArticleUrlValid] = useState(true);
 
-  // Redux variables
-  const {
-    running: isSavingArticle,
-    error: savingArticleError,
-    result: savingArticleResult,
-  } = useSelector(reduxSelectors.savingArticleProcess());
+  const { addArticle, addArticleResult, isAddingArticle, addArticleError } =
+    useAddArticle();
 
   // Callbacks
   const onUrlFieldChange: React.ChangeEventHandler<HTMLInputElement> =
-    useCallback(
-      (event) => {
-        setArticleUrl(event.target.value);
-        setIsArticleUrlValid(
-          VALIDATION_RULES.articleUrl.validator(event.target.value)
-        );
-      },
-      [dispatch]
-    );
-  const onCreateOutlineClick = useCallback(() => {
+    useCallback((event) => {
+      setArticleUrl(event.target.value);
+      setIsArticleUrlValid(
+        VALIDATION_RULES.articleUrl.validator(event.target.value)
+      );
+    }, []);
+  const onCreateOutlineClick = useCallback(async () => {
     if (articleUrl && isArticleUrlValid) {
-      dispatch(actions.generateAndAddArticle(articleUrl));
+      await addArticle({ url: articleUrl });
     } else {
       return false;
     }
-  }, [dispatch, isArticleUrlValid, articleUrl]);
+  }, [isArticleUrlValid, articleUrl, addArticle]);
 
   useEffect(() => {
-    if (!isSavingArticle && savingArticleError) {
-      toast(String(savingArticleError), {
+    if (!isAddingArticle && addArticleError) {
+      toast(String(addArticleError), {
         type: "error",
         className: "toast-notification",
       });
-    } else if (!isSavingArticle && savingArticleResult) {
-      navigate(
-        `/articles/${savingArticleResult.addArticle.id}/${savingArticleResult.addArticle.secretId}`
-      );
+    } else if (!isAddingArticle && addArticleResult) {
+      navigate(`/articles/${addArticleResult.id}/${addArticleResult.secretId}`);
     }
-  }, [isSavingArticle, savingArticleResult, savingArticleError]);
+  }, [isAddingArticle, addArticleResult, addArticleError, navigate]);
 
   return (
     <div className={classes.root}>
@@ -120,7 +103,7 @@ const EnterLink = () => {
           onChange={onUrlFieldChange}
           autoFocus
           error={!isArticleUrlValid}
-          disabled={isSavingArticle}
+          disabled={isAddingArticle}
           helperText={
             !isArticleUrlValid && VALIDATION_RULES.articleUrl.errorMessage
           }
@@ -130,8 +113,8 @@ const EnterLink = () => {
           size="large"
           variant="contained"
           onClick={onCreateOutlineClick}
-          loading={isSavingArticle}
-          disabled={isSavingArticle || !isArticleUrlValid || !articleUrl  }
+          loading={isAddingArticle}
+          disabled={isAddingArticle || !isArticleUrlValid || !articleUrl}
         >
           Create Outline
         </LoadingButton>

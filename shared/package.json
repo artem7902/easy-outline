@@ -1,0 +1,13 @@
+{
+  "name": "easy-outline-shared",
+  "version": "0.1.0",
+  "main": ".build/index.js",
+  "types": ".build/index.d.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "typescript": "4.9.5"
+  },
+  "dependencies": {}
+}

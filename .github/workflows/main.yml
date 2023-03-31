@@ -1,0 +1,43 @@
+on:
+  push:
+    branches: [ "develop", "master" ]
+jobs:
+  deploy:
+    name: deploy to a stage
+    runs-on: ubuntu-20.04
+    environment: Main
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: us-east-1
+    steps:
+    - uses: actions/checkout@v3
+    - name: Use Node.js v16
+      uses: actions/setup-node@v3
+      with:
+        node-version: 16
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.7' 
+    - name: Install AWS CDK
+      run: npm install -g aws-cdk
+    - name: Set Dev Stage
+      if: github.ref_name	!= 'master'
+      run: echo "STAGE=dev" >> $GITHUB_ENV
+    - name: Set Prod Stage
+      if: github.ref_name	== 'master'
+      run: echo "STAGE=prod" >> $GITHUB_ENV
+    - name: Install NPM dependencies
+      run: |
+        cd $GITHUB_WORKSPACE/shared && npm install && npm run build
+        cd $GITHUB_WORKSPACE/aws && npm install
+        cd $GITHUB_WORKSPACE/frontend && npm install
+    - name: Deploy AWS infrastructure
+      run: |
+        cd $GITHUB_WORKSPACE/aws && cdk deploy --outputs-file ./cdk.out/cdk-outputs.json --require-approval never
+        echo "REACT_APP_APPSYNC_API_KEY=$(jq  -r '.[].AppsyncGraphQLApiKey' "$GITHUB_WORKSPACE/aws/cdk.out/cdk-outputs.json")" >> $GITHUB_ENV
+        echo "AWS_S3_BUCKET_NAME=$(jq  -r '.[].WebsiteS3BucketName' "$GITHUB_WORKSPACE/aws/cdk.out/cdk-outputs.json")" >> $GITHUB_ENV
+    - name: Deploy SPA
+      run: |
+        echo $STAGE
+        cd $GITHUB_WORKSPACE/frontend && npm run deploy

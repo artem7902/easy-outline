@@ -1,4 +1,5 @@
-import gql from "graphql-tag";
+import { gql } from "graphql-request";
+
 export const addArticle = gql`
   mutation Mutation($url: String!) {
     addArticle(url: $url) {
@@ -28,6 +29,7 @@ export const updateArticle = gql`
         html
         authors
         publishDate
+        sourceUrl
       }
     }
   }

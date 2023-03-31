@@ -1,0 +1,1 @@
+export { getSharedConfig }  from "./config";

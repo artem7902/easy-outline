@@ -1,3 +1,4 @@
+import os
 import time
 import shortuuid
 import re
@@ -9,7 +10,7 @@ from newspaper import Article
 
 def add_article_to_dynamo(article):
     dynamo_client = boto3.resource('dynamodb')
-    articles_table = dynamo_client.Table('outline-like-articles-dev')
+    articles_table = dynamo_client.Table(os.environ.get("ARTICLES_TABLE"))
     articles_table.put_item(Item=article)
 
 def clean_html_tags(html_code):

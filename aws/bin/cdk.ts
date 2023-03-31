@@ -5,5 +5,5 @@ import { CdkStack } from '../lib/cdk-stack';
 import * as config from "../config"
 
 const app = new cdk.App();
-new CdkStack(app, config.STACK_NAME());
+new CdkStack(app, config.STACK_NAME);
 app.synth();

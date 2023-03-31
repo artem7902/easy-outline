@@ -5,13 +5,21 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { Box, CircularProgress, Divider, Grid, Grow, IconButton, InputAdornment, Link, Slide, TextField, Typography  } from "@mui/material";
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import {
+  CircularProgress,
+  Container,
+  Divider,
+  Grid,
+  IconButton,
+  Link,
+  Slide,
+  TextField,
+  Typography,
+} from "@mui/material";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import { LoadingButton } from "@mui/lab";
-import { API, graphqlOperation } from "aws-amplify";
 import { toast } from "react-toastify";
 import { useParams } from "react-router-dom";
-import { GraphQLResult } from "@aws-amplify/api/lib/types";
 
 import { makeStyles } from "tss-react/mui";
 
@@ -19,44 +27,41 @@ import Mark from "mark.js";
 
 import _ from "lodash";
 
-import PerfectScrollbar from 'react-perfect-scrollbar'
-
-import * as queries from "@api/queries";
+import PerfectScrollbar from "react-perfect-scrollbar";
 
 // @ts-ignore
 import { ERROR_MESSAGES, SUCCESS_MESSAGES } from "@config/constants";
 
-//models
-import { IGetPublicArticleResponse } from "@models/api/responses/IGetPublicArticleResponse";
-
 import { IArticle } from "@models/api/IArticle";
 
-import * as mutations from "@api/mutations";
+import { useArticle, useSaveArticle } from "@api/index";
 
-import { IUpdateArticleResponse } from "@models/api/responses/IUpdateArticleResponse";
+import { dom } from "@utils";
+
+import { Header } from "./Header";
 
 const useStyles = makeStyles()((theme) => ({
   loadingWrapper: {
     display: "flex",
     justifyContent: "center",
-    marginTop: "20%"
+    marginTop: "20%",
   },
   articleWrapper: {
-    paddingTop: 35,
-    height: "calc(100vh - 100px)",
+    paddingTop: 100,
+    height: "calc(100vh - 64px)",
   },
   title: {
-    textAlign: "center"
+    textAlign: "center",
   },
   source: {
-    textAlign: "center"
+    textAlign: "center",
   },
   sourceWrapper: {
-    textAlign: "center"
+    textAlign: "center",
   },
   articleBody: {
     marginLeft: theme.spacing(1),
-    marginRight: theme.spacing(1)
+    marginRight: theme.spacing(1),
   },
   outlinedText: {
     backgroundColor: "white",
@@ -75,11 +80,11 @@ const useStyles = makeStyles()((theme) => ({
     position: "fixed",
     display: "flex",
     justifyContent: "center",
-    zIndex: 1500,
-    top: theme.spacing(1)
+    zIndex: 2,
+    top: theme.spacing(8),
   },
   saveButton: {
-    width: 200,
+    width: "100%",
     zIndex: 1500,
   },
   shareBlock: {
@@ -90,11 +95,11 @@ const useStyles = makeStyles()((theme) => ({
     paddingRight: theme.spacing(3),
   },
   readUrl: {
-    width: "100%"
+    width: "100%",
   },
   writeUrl: {
-    width: "100%"
-  }
+    width: "100%",
+  },
 }));
 
 const Article = () => {
@@ -109,78 +114,33 @@ const Article = () => {
     secretId?: string;
   }>();
 
-  const [article, setArticle] = useState<IArticle>();
+  const { getArticleResult, isGettingArticle, getArticleError } =
+    useArticle(articleId);
+  const { saveArticle, saveArticleResult, isSavingArticle, saveArticleError } =
+    useSaveArticle();
 
   const [currentHtml, setCurrentHtml] = useState<string>();
 
-  const [isGettingArticle, setIsGettingArticle] = useState<boolean>(true);
+  const [article, setArticle] = useState<IArticle>();
 
-  const [isSavingChanges, setIsSavingChanges] = useState<boolean>(false);
-
-  const getArticle = useCallback( async () => {
-    try {
-      const { data, errors } = await API.graphql(
-        graphqlOperation(queries.getPublicArticle, { id: articleId })
-      ) as GraphQLResult<IGetPublicArticleResponse>;
-      if (!errors && data) {
-        setArticle(data.getPublicArticle.article);
-      } else {
-        toast(ERROR_MESSAGES.BACKEND_ERROR, {
-          type: "error",
-          className: "toast-notification",
-        });
-      }
-    } catch (error) {
-      toast(ERROR_MESSAGES.BACKEND_ERROR, {
-        type: "error",
-        className: "toast-notification",
+  const onSaveButtonClick = useCallback(async () => {
+    if (articleId && currentHtml && secretId) {
+      await saveArticle({
+        id: articleId,
+        html: currentHtml,
+        secretId,
       });
-    } finally {
-      setIsGettingArticle(false);
     }
-  }, [articleId]);
+  }, [currentHtml, articleId, secretId, saveArticle]);
 
-  const saveArticle = useCallback( async () => {
-    setIsSavingChanges(true);
-    try {
-      const { data, errors } = await  API.graphql(
-        graphqlOperation(mutations.updateArticle, {
-          id: articleId,
-          secretId,
-          html: currentHtml,
-        })
-      ) as GraphQLResult<IUpdateArticleResponse>;
-      if (!errors && data) {
-        setArticle(data.updateArticle.article);
-        toast(SUCCESS_MESSAGES.ARTICLE_SAVED, {
-          type: "success",
-          className: "toast-notification",
-        });
-      } else {
-        toast(ERROR_MESSAGES.BACKEND_ERROR, {
-          type: "error",
-          className: "toast-notification",
-        });
-      }
-    } catch (error) {
-      toast(ERROR_MESSAGES.BACKEND_ERROR, {
-        type: "error",
-        className: "toast-notification",
-      });
-    } finally {
-      setIsSavingChanges(false);
-    }
-  }, [currentHtml]);
-
-  const onShareUrlButtonClick  = useCallback( (url: string) => {
+  const onShareUrlButtonClick = useCallback((url: string) => {
     toast("The URL copied to clipboard", {
       type: "info",
       className: "toast-notification",
-      position: "bottom-center"
-    })
+      position: "bottom-center",
+    });
     navigator.clipboard.writeText(url);
-  
-  }, [])
+  }, []);
 
   const onMouseUp = useCallback(() => {
     /*
@@ -190,11 +150,11 @@ const Article = () => {
         3. Mark partially inside - remove mark and expand selected range to create a new concated mark
         4. If nothing above - just create a new mark
     */
-    
+
     if (bodyRef.current && markRef.current && window.getSelection) {
       const selection = window.getSelection();
       const { childNodes } = bodyRef.current;
-      const deepChildNodes = getDeepChildForNodes(childNodes);
+      const deepChildNodes = dom.getDeepChildForNodes(childNodes);
       if (selection) {
         _.range(0, selection.rangeCount).forEach((i) => {
           const range = selection.getRangeAt(i);
@@ -202,10 +162,11 @@ const Article = () => {
             range;
           const beforeContainers = deepChildNodes.filter(
             (n) =>
-              rangeCompareNode(range, n) === 0 && !n.isSameNode(startContainer)
+              dom.rangeCompareNode(range, n) === 0 &&
+              !n.isSameNode(startContainer)
           );
           const betweenContainers = deepChildNodes.filter(
-            (n) => rangeCompareNode(range, n) === 3
+            (n) => dom.rangeCompareNode(range, n) === 3
           );
           const startPosition =
             beforeContainers.reduce(
@@ -243,7 +204,6 @@ const Article = () => {
               element: "mark",
               className: `${classes.outlinedText}`,
               done: (markedBlocks) => {
-
                 if (markedBlocks) {
                   selection.removeAllRanges();
                   setCurrentHtml(bodyRef.current?.innerHTML);
@@ -254,55 +214,44 @@ const Article = () => {
         });
       }
     }
-  }, [bodyRef.current, markRef.current]);
+  }, [classes.outlinedText]);
 
-  const rangeCompareNode = (range: Range, node: Node) => {
-    const nodeRange = node.ownerDocument!.createRange();
-    try {
-      nodeRange.selectNode(node);
-    } catch (e) {
-      nodeRange.selectNodeContents(node);
-    }
-    const nodeIsBefore =
-      range.compareBoundaryPoints(Range.START_TO_START, nodeRange) === 1;
-    const nodeIsAfter =
-      range.compareBoundaryPoints(Range.END_TO_END, nodeRange) === -1;
-
-    if (nodeIsBefore && !nodeIsAfter) return 0;
-    if (!nodeIsBefore && nodeIsAfter) return 1;
-    if (nodeIsBefore && nodeIsAfter) return 2;
-
-    return 3;
-  };
-
-  const getDeepChildForNodes = (childNodes: NodeListOf<ChildNode>) => {
-    const child: ChildNode[] = [];
-    childNodes.forEach((node) => {
-      if (!node.childNodes.length) {
-        child.push(node);
-      } else {
-        child.push(...getDeepChildForNodes(node.childNodes));
-      }
-    });
-    return child;
-  };
-
-  const onClick = (markId: number) => {
-    if(secretId){
-      markRef.current?.unmark({
-        element: `#${markId}`,
-        done: () => {
-          setCurrentHtml(bodyRef.current?.innerHTML);
-        },
+  useEffect(() => {
+    if (getArticleError || saveArticleError) {
+      toast(ERROR_MESSAGES.BACKEND_ERROR, {
+        type: "error",
+        className: "toast-notification",
       });
     }
-  };
+  }, [getArticleError, saveArticleError]);
 
   useEffect(() => {
-    getArticle();
-  }, []);
+    if (!isSavingArticle && saveArticleResult) {
+      setArticle(saveArticleResult);
+      toast(SUCCESS_MESSAGES.ARTICLE_SAVED, {
+        type: "success",
+        className: "toast-notification",
+      });
+    }
+  }, [isSavingArticle, saveArticleResult]);
 
   useEffect(() => {
+    if (getArticleResult) {
+      setArticle(getArticleResult);
+    }
+  }, [getArticleResult]);
+
+  useEffect(() => {
+    const onClick = (markId: number) => {
+      if (secretId) {
+        markRef.current?.unmark({
+          element: `#${markId}`,
+          done: () => {
+            setCurrentHtml(bodyRef.current?.innerHTML);
+          },
+        });
+      }
+    };
     if (bodyRef.current && !markRef.current) {
       markRef.current = new Mark(bodyRef.current as any);
     }
@@ -325,7 +274,7 @@ const Article = () => {
         },
       });
     }
-  }, [article, bodyRef.current]);
+  }, [article, secretId]);
 
   useEffect(() => {
     if (secretId && bodyRef.current && article) {
@@ -336,7 +285,7 @@ const Article = () => {
         window.removeEventListener("mouseup", onMouseUp);
       }
     };
-  }, [onMouseUp, secretId]);
+  }, [onMouseUp, secretId, article]);
 
   const isArticleChanged = useMemo(() => {
     if (!article?.html || !currentHtml) return false;
@@ -350,52 +299,81 @@ const Article = () => {
 
   // Article block render start
   const renderTitle = useMemo(() => {
-    return article?.title ? <Typography className={classes.title} variant={"h6"}>{article.title}</Typography> : undefined
-  }, [article?.title])
+    return article?.title ? (
+      <Typography className={classes.title} variant={"h6"}>
+        {article.title}
+      </Typography>
+    ) : undefined;
+  }, [article?.title, classes.title]);
 
   const renderSource = useMemo(() => {
-    return article?.sourceUrl ? <div className={classes.sourceWrapper}> <Link target="_blank" rel="noreferrer" className={classes.source} href={article.sourceUrl}>Source</Link> </div>: undefined
-  }, [article?.sourceUrl])
+    return article?.sourceUrl ? (
+      <div className={classes.sourceWrapper}>
+        {" "}
+        <Link
+          target="_blank"
+          rel="noreferrer"
+          className={classes.source}
+          href={article.sourceUrl}
+        >
+          Source
+        </Link>{" "}
+      </div>
+    ) : undefined;
+  }, [article?.sourceUrl, classes.source, classes.sourceWrapper]);
 
   const renderArticle = useMemo(() => {
-    return       <PerfectScrollbar>
-    <div className={classes.articleWrapper}>
-    {renderTitle}
-    {renderSource}
-  <div ref={bodyRef} className={classes.articleBody}></div>
-  </div>
-  </PerfectScrollbar>
-  }, [renderTitle, renderSource, bodyRef])
+    return (
+      <PerfectScrollbar>
+        <Container className={classes.articleWrapper} maxWidth="xl">
+          {renderTitle}
+          {renderSource}
+          <div ref={bodyRef} className={classes.articleBody}></div>
+        </Container>
+      </PerfectScrollbar>
+    );
+  }, [
+    renderTitle,
+    renderSource,
+    bodyRef,
+    classes.articleBody,
+    classes.articleWrapper,
+  ]);
   // Article block render end
 
   // Share block render start
   const renderReadUrlField = useMemo(() => {
-    if(!articleId) return;
+    if (!articleId) return;
     const readUrl = `${window.location.host}/articles/${articleId}`;
-    return <TextField
-          className={classes.readUrl}
-          label="Read URL"
-          variant="outlined"
-          value={readUrl}
-          size="small"
-          InputProps={{
-            endAdornment: (
-                <IconButton onClick={ (e) =>{
-                  e.stopPropagation()
-                  onShareUrlButtonClick(readUrl)
-                } }  size="small">
-                  <ContentCopyIcon />
-                </IconButton>
-            )
-          }}
-        />
-  }
-  , [articleId, onShareUrlButtonClick])
+    return (
+      <TextField
+        className={classes.readUrl}
+        label="Read URL"
+        variant="outlined"
+        value={readUrl}
+        size="small"
+        InputProps={{
+          endAdornment: (
+            <IconButton
+              onClick={(e) => {
+                e.stopPropagation();
+                onShareUrlButtonClick(readUrl);
+              }}
+              size="small"
+            >
+              <ContentCopyIcon />
+            </IconButton>
+          ),
+        }}
+      />
+    );
+  }, [articleId, onShareUrlButtonClick, classes.readUrl]);
 
   const renderWriteUrlField = useMemo(() => {
-    if(!secretId) return;
-    const writeUrl = `${window.location.host}/articles/${articleId}/${secretId}`
-    return <TextField
+    if (!secretId) return;
+    const writeUrl = `${window.location.host}/articles/${articleId}/${secretId}`;
+    return (
+      <TextField
         className={classes.writeUrl}
         label="Read/Write URL"
         variant="outlined"
@@ -403,61 +381,94 @@ const Article = () => {
         size="small"
         InputProps={{
           endAdornment: (
-              <IconButton onClick={ (e) =>{
-                e.stopPropagation()
-                onShareUrlButtonClick(writeUrl)
-              } }  size="small">
-                <ContentCopyIcon />
-              </IconButton>
-          )
+            <IconButton
+              onClick={(e) => {
+                e.stopPropagation();
+                onShareUrlButtonClick(writeUrl);
+              }}
+              size="small"
+            >
+              <ContentCopyIcon />
+            </IconButton>
+          ),
         }}
       />
-  }
-, [articleId, secretId, onShareUrlButtonClick])
+    );
+  }, [articleId, secretId, onShareUrlButtonClick, classes.writeUrl]);
 
   const renderSharedBlock = useMemo(() => {
-    return <>      <Divider/> <Grid className={classes.shareBlock} container spacing={1}>
-    <Grid item xs={6}>
-      {renderReadUrlField}
-    </Grid>
-   { renderWriteUrlField && <Grid item xs={6}>
-      {renderWriteUrlField}
-  </Grid>}
-  </Grid> </> 
-  }, [renderReadUrlField, renderWriteUrlField, isGettingArticle])
+    if (!article) return <></>;
+    return (
+      <>
+        <Divider />
+        <Grid className={classes.shareBlock} container spacing={1}>
+          <Grid item xs={6}>
+            {renderReadUrlField}
+          </Grid>
+          {renderWriteUrlField && (
+            <Grid item xs={6}>
+              {renderWriteUrlField}
+            </Grid>
+          )}
+        </Grid>
+      </>
+    );
+  }, [renderReadUrlField, renderWriteUrlField, article, classes.shareBlock]);
   // Share block render end
 
   const renderLoadingBlock = useMemo(() => {
-    return isGettingArticle ? <div className={classes.loadingWrapper}><CircularProgress variant="indeterminate" /> </div> : <></>
-  }, [isGettingArticle])
+    return isGettingArticle ? (
+      <div className={classes.loadingWrapper}>
+        <CircularProgress variant="indeterminate" />{" "}
+      </div>
+    ) : (
+      <></>
+    );
+  }, [isGettingArticle, classes.loadingWrapper]);
 
   const renderSaveButton = useMemo(() => {
-    return     secretId ?    <Slide direction="down" in={isArticleChanged} mountOnEnter unmountOnExit>
-    <Grid className={classes.saveButtonWrapper}>
-    <LoadingButton
-      className={classes.saveButton}
-      variant="contained"
-      color={"primary"}
-      size="small"
-      onClick={saveArticle}
-      loading={isSavingChanges}
-      disabled={isSavingChanges}
-    >
-      Save Changes
-    </LoadingButton>
-    </Grid>
-  </Slide> : <></>
-  }, [secretId, isArticleChanged, isSavingChanges, saveArticle])
+    return secretId ? (
+      <Slide direction="down" in={isArticleChanged} mountOnEnter unmountOnExit>
+        <Grid className={classes.saveButtonWrapper}>
+          <LoadingButton
+            className={classes.saveButton}
+            variant="contained"
+            color={"primary"}
+            size="small"
+            onClick={onSaveButtonClick}
+            loading={isSavingArticle}
+            disabled={isSavingArticle}
+          >
+            Save Changes
+          </LoadingButton>
+        </Grid>
+      </Slide>
+    ) : (
+      <></>
+    );
+  }, [
+    secretId,
+    isArticleChanged,
+    isSavingArticle,
+    onSaveButtonClick,
+    classes.saveButton,
+    classes.saveButtonWrapper,
+  ]);
 
   // Main render
   return (
-    isGettingArticle ? 
-    <> {renderLoadingBlock}</> :
-      <>
-      {renderSaveButton}
-      {renderArticle}
-      {renderSharedBlock}
-      </>
+    <>
+      <Header />
+      {isGettingArticle ? (
+        <> {renderLoadingBlock}</>
+      ) : (
+        <>
+          {renderSaveButton}
+          {renderArticle}
+          {renderSharedBlock}
+        </>
+      )}
+    </>
   );
 };
 

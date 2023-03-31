@@ -1,7 +1,7 @@
 import { IArticle } from "../IArticle";
 
 export interface IGetPublicArticleResponse {
-  getPublicArticle: {
+  getPublicArticle?: {
     id: string;
     secretId: string;
     article: IArticle;
