@@ -34,7 +34,7 @@ import { ERROR_MESSAGES, SUCCESS_MESSAGES } from "@config/constants";
 
 import { IArticle } from "@models/api/IArticle";
 
-import { useArticle, useSaveArticle } from "@api/index";
+import { useArticle, useSaveArticle, useUpdatedArticleSub } from "@api/index";
 
 import { dom } from "@utils";
 
@@ -114,10 +114,13 @@ const Article = () => {
     secretId?: string;
   }>();
 
+  // API hooks
   const { getArticleResult, isGettingArticle, getArticleError } =
     useArticle(articleId);
   const { saveArticle, saveArticleResult, isSavingArticle, saveArticleError } =
     useSaveArticle();
+
+  const { updatedArticleSubResult } = useUpdatedArticleSub(articleId);
 
   const [currentHtml, setCurrentHtml] = useState<string>();
 
@@ -240,6 +243,12 @@ const Article = () => {
       setArticle(getArticleResult);
     }
   }, [getArticleResult]);
+
+  useEffect(() => {
+    if(updatedArticleSubResult){
+      setArticle(updatedArticleSubResult);
+    }
+  }, [updatedArticleSubResult])
 
   useEffect(() => {
     const onClick = (markId: number) => {
