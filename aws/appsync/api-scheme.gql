@@ -9,12 +9,13 @@ type Query {
 }
 
 type Subscription {
-
+    updatedArticle(id: String!): OutlineRecord
+    @aws_subscribe(mutations: ["updateArticle"])
 }
 
 type Mutation {
     addArticle(url: String!): OutlineSecretRecord
-    updateArticle(id: String!, secretId: String!, html: String!): OutlineSecretRecord
+    updateArticle(id: String!, secretId: String!, html: String!): OutlineRecord
 }
 
 type Article {

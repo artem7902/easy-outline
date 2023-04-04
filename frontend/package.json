@@ -9,6 +9,7 @@
     "@mui/lab": "^5.0.0-alpha.121",
     "@mui/material": "^5.11.11",
     "@reduxjs/toolkit": "^1.9.3",
+    "aws-amplify": "^5.0.23",
     "graphql": "^16.6.0",
     "graphql-request": "^5.2.0",
     "lodash": "^4.17.21",
@@ -22,7 +23,7 @@
     "redux": "^4.2.1",
     "redux-thunk": "^2.4.2",
     "shared": "../shared",
-    "swr": "^2.1.1",
+    "swr": "^2.1.2",
     "tss-react": "^4.7.1",
     "validate.js": "^0.13.1",
     "validator": "^13.9.0"

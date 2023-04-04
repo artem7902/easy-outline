@@ -1,7 +1,7 @@
 import { IArticle } from "../IArticle";
 
-export interface IUpdateArticleResponse {
-  updateArticle: {
+export interface IUpdatedArticleSubResponse {
+  updatedArticle: {
     id: string;
     article: IArticle;
   };

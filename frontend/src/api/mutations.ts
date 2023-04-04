@@ -21,7 +21,6 @@ export const updateArticle = gql`
   mutation Mutation($id: String!, $secretId: String!, $html: String!) {
     updateArticle(id: $id, secretId: $secretId, html: $html) {
       id
-      secretId
       article {
         title
         originalText
