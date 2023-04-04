@@ -2,7 +2,7 @@ import { Amplify } from 'aws-amplify';
 
 import { getSharedConfig } from "shared";
 
-export const STAGE = process.env.STAGE ?? "dev";
+export const STAGE = process.env.REACT_APP_STAGE ?? "dev";
 
 export const { MAIN_DOMAIN, API_DOMAIN_NAME, DEFAULT_REGION } =
   getSharedConfig(STAGE);

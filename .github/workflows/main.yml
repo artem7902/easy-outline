@@ -3,7 +3,7 @@ on:
     branches: [ "develop", "master" ]
 jobs:
   deploy:
-    name: deploy to a stage
+    name: Deploy to a stage
     runs-on: ubuntu-20.04
     environment: Main
     env:
@@ -23,10 +23,14 @@ jobs:
       run: npm install -g aws-cdk
     - name: Set Dev Stage
       if: github.ref_name	!= 'master'
-      run: echo "STAGE=dev" >> $GITHUB_ENV
+      run: |
+        echo "STAGE=dev" >> $GITHUB_ENV
+        echo "REACT_APP_STAGE=dev" >> $GITHUB_ENV
     - name: Set Prod Stage
       if: github.ref_name	== 'master'
-      run: echo "STAGE=prod" >> $GITHUB_ENV
+      run: |
+        echo "STAGE=prod" >> $GITHUB_ENV
+        echo "REACT_APP_STAGE=prod" >> $GITHUB_ENV
     - name: Install NPM dependencies
       run: |
         cd $GITHUB_WORKSPACE/shared && npm install && npm run build
