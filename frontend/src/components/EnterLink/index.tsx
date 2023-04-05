@@ -86,7 +86,11 @@ const EnterLink = () => {
 
   return (
     <div className={classes.root}>
-      <img className={classes.logo} src={`${process.env.PUBLIC_URL}/assets/logo.png`} alt="logo" />
+      <img
+        className={classes.logo}
+        src={`${process.env.PUBLIC_URL}/assets/logo.png`}
+        alt="logo"
+      />
       <Box
         className={classes.form}
         component="form"

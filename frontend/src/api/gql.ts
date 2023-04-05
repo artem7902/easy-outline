@@ -27,19 +27,21 @@ export const gqlFetcher = <T>({
 export const gqlMutator = <T>(query: string, input?: { arg: Variables }) =>
   gqlClient.request<T>(query, input?.arg);
 
-
-export const gqlSubscriber = <T>({
-  query,
-  input,
-}: {
-  query: string;
-  input?: Variables;
-}, { next }: SWRSubscriptionOptions<T>) =>{
-  const observable =  AmplifyApi.graphql<GraphQLSubscription<T>>(
+export const gqlSubscriber = <T>(
+  {
+    query,
+    input,
+  }: {
+    query: string;
+    input?: Variables;
+  },
+  { next }: SWRSubscriptionOptions<T>
+) => {
+  const observable = AmplifyApi.graphql<GraphQLSubscription<T>>(
     graphqlOperation(query, input)
   ).subscribe({
     next: ({ value }) => {
-      next(null,  value.data as T)
+      next(null, value.data as T);
     },
     error: (error) => next(error),
   });
