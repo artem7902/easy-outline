@@ -9,8 +9,6 @@ import { useNavigate } from "react-router-dom";
 
 import { useAddArticle } from "@api/index";
 
-import logo from "../../logo.png";
-
 const VALIDATION_RULES = {
   articleUrl: {
     errorMessage: "Please insert a valid URL",
@@ -88,7 +86,7 @@ const EnterLink = () => {
 
   return (
     <div className={classes.root}>
-      <img className={classes.logo} src={logo} alt="logo" />
+      <img className={classes.logo} src={`${process.env.PUBLIC_URL}/assets/logo.png`} alt="logo" />
       <Box
         className={classes.form}
         component="form"
