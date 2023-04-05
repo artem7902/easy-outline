@@ -6,8 +6,6 @@ import { makeStyles } from "tss-react/mui";
 
 import { useNavigate } from "react-router-dom";
 
-import logo from "../../logo-white.png";
-
 const useStyles = makeStyles()((theme) => ({
   container: {
     backgroundColor: "black",
@@ -32,7 +30,7 @@ export const Header = () => {
         <img
           onClick={onLogoClick}
           className={classes.logo}
-          src={logo}
+          src={`${process.env.PUBLIC_URL}/assets/logo-white.png`}
           alt="logo"
         />
       </Toolbar>
