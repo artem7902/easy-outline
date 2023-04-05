@@ -163,13 +163,17 @@ const Article = () => {
           const range = selection.getRangeAt(i);
           const { startOffset, endOffset, startContainer, endContainer } =
             range;
+
           const beforeContainers = deepChildNodes.filter(
             (n) =>
               dom.rangeCompareNode(range, n) === 0 &&
               !n.isSameNode(startContainer)
           );
+
           const betweenContainers = deepChildNodes.filter(
-            (n) => dom.rangeCompareNode(range, n) === 3
+            (n) =>
+              dom.rangeCompareNode(range, n) === 3 &&
+              bodyRef.current?.contains(n)
           );
           const startPosition =
             beforeContainers.reduce(
@@ -180,22 +184,44 @@ const Article = () => {
             (acc, n) => (acc += n.textContent?.length ?? 0),
             0
           );
+
+          const isStartContainerSelectable =
+            bodyRef.current?.contains(startContainer);
+          const isEndContainerSelectable =
+            bodyRef.current?.contains(endContainer);
           const isOneContainerSelected =
             startContainer.isSameNode(endContainer);
 
-          // Check all nodes for marks
-          // console.log("startContainer", startContainer);
-          // console.log("startContainer parent", startContainer.parentElement);
-          // console.log("betweenContainers", betweenContainers);
-          // console.log("endContainer", endContainer);
-          // console.log("endContainer parent", endContainer.parentNode);
+          const getMarkLength = () => {
+            if (isOneContainerSelected) {
+              // Check if container is a part of article body
+              if (!bodyRef.current?.contains(startContainer)) {
+                return 0;
+              } else {
+                return endOffset - startOffset;
+              }
+            } else {
+              const selectInStartContainerLength = isStartContainerSelectable
+                ? (startContainer.textContent?.length ?? 0) - startOffset
+                : 0;
+              const selectInEndContainerLength = isEndContainerSelectable
+                ? endOffset
+                : 0;
+              return (
+                selectInStartContainerLength +
+                betweenTextLength +
+                selectInEndContainerLength
+              );
+            }
+          };
 
-          const markLength = isOneContainerSelected
-            ? endOffset - startOffset
-            : (startContainer.textContent?.length ?? 0) -
-              startOffset +
-              betweenTextLength +
-              endOffset;
+          const markLength = getMarkLength();
+
+          if (!markLength) {
+            selection.removeAllRanges();
+            return;
+          }
+
           markRef.current?.markRanges(
             [
               {
@@ -245,10 +271,10 @@ const Article = () => {
   }, [getArticleResult]);
 
   useEffect(() => {
-    if(updatedArticleSubResult){
+    if (updatedArticleSubResult) {
       setArticle(updatedArticleSubResult);
     }
-  }, [updatedArticleSubResult])
+  }, [updatedArticleSubResult]);
 
   useEffect(() => {
     const onClick = (markId: number) => {
