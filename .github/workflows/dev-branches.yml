@@ -27,9 +27,24 @@ jobs:
       run: npm install -g aws-cdk
     - name: Install NPM dependencies
       run: |
+        cd $GITHUB_WORKSPACE && npm install
         cd $GITHUB_WORKSPACE/shared && npm install && npm run build
         cd $GITHUB_WORKSPACE/aws && npm install
         cd $GITHUB_WORKSPACE/frontend && npm install
+    - name: Git config
+      run: |
+        git config --global user.name 'Github Actions'
+        git config --global user.email 'noreply@github.com'
+    - name: Code formatting with prettier
+      run: |
+        cd $GITHUB_WORKSPACE && npm run format && git status --porcelain
+        if [ -n "$(git status --porcelain)" ]; then
+            git add . &&
+            git commit -m "Auto code formatting" &&
+            git push origin $GITHUB_REF_NAME;
+        else
+          echo "no changes";
+        fi
     - name: Build AWS infrastructure
       run: |
         cd $GITHUB_WORKSPACE/aws && cdk synth
