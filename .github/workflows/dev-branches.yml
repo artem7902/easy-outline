@@ -23,6 +23,10 @@ jobs:
     - uses: actions/setup-python@v4
       with:
         python-version: '3.7' 
+    - name: Git config
+      run: |
+        git config --global user.name 'Github Actions'
+        git config --global user.email 'noreply@github.com'
     - name: Install AWS CDK
       run: npm install -g aws-cdk
     - name: Install NPM dependencies
@@ -31,10 +35,12 @@ jobs:
         cd $GITHUB_WORKSPACE/shared && npm install && npm run build
         cd $GITHUB_WORKSPACE/aws && npm install
         cd $GITHUB_WORKSPACE/frontend && npm install
-    - name: Git config
+    - name: Build AWS infrastructure
       run: |
-        git config --global user.name 'Github Actions'
-        git config --global user.email 'noreply@github.com'
+        cd $GITHUB_WORKSPACE/aws && cdk synth
+    - name: Build SPA
+      run: |
+        cd $GITHUB_WORKSPACE/frontend && npm run build
     - name: Code formatting with prettier
       run: |
         cd $GITHUB_WORKSPACE && npm run format && git status --porcelain
@@ -45,9 +51,3 @@ jobs:
         else
           echo "no changes";
         fi
-    - name: Build AWS infrastructure
-      run: |
-        cd $GITHUB_WORKSPACE/aws && cdk synth
-    - name: Build SPA
-      run: |
-        cd $GITHUB_WORKSPACE/frontend && npm run build
