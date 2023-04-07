@@ -145,102 +145,70 @@ const Article = () => {
     navigator.clipboard.writeText(url);
   }, []);
 
-  const onMouseUp = useCallback(() => {
-    /*
-      Different scenarios:
-        1. Selected text is fully inside a big mark - ignore and do nothing
-        2. Marks bettwen the selected text (full) - remove marks and create a big one
-        3. Mark partially inside - remove mark and expand selected range to create a new concated mark
-        4. If nothing above - just create a new mark
-    */
-
+  const onMouseUp = useCallback(async () => {
     if (bodyRef.current && markRef.current && window.getSelection) {
       const selection = window.getSelection();
-      const { childNodes } = bodyRef.current;
-      const deepChildNodes = dom.getDeepChildForNodes(childNodes);
+      const deepChildNodes = dom.getDeepChildForNodes(
+        bodyRef.current.childNodes
+      );
       if (selection) {
-        _.range(0, selection.rangeCount).forEach((i) => {
+        for (const i of _.range(0, selection.rangeCount)) {
           const range = selection.getRangeAt(i);
-          const { startOffset, endOffset, startContainer, endContainer } =
-            range;
+          const { startOffset, startContainer, endContainer } = range;
 
-          const beforeContainers = deepChildNodes.filter(
+          const beforeRangeNodes = deepChildNodes.filter(
             (n) =>
               dom.rangeCompareNode(range, n) === 0 &&
               !n.isSameNode(startContainer)
           );
-
-          const betweenContainers = deepChildNodes.filter(
-            (n) =>
-              dom.rangeCompareNode(range, n) === 3 &&
-              bodyRef.current?.contains(n)
-          );
-          const startPosition =
-            beforeContainers.reduce(
-              (acc, n) => (acc += n.textContent?.length ?? 0),
-              0
-            ) + startOffset;
-          const betweenTextLength = betweenContainers.reduce(
-            (acc, n) => (acc += n.textContent?.length ?? 0),
-            0
+          const withinRangeNodes = dom.getTextNodesWithinSelectRange(
+            bodyRef.current,
+            range,
+            deepChildNodes
           );
 
-          const isStartContainerSelectable =
-            bodyRef.current?.contains(startContainer);
-          const isEndContainerSelectable =
-            bodyRef.current?.contains(endContainer);
-          const isOneContainerSelected =
-            startContainer.isSameNode(endContainer);
+          const marksToRemove = dom.findMarkedNodes([
+            startContainer,
+            ...withinRangeNodes,
+            endContainer,
+          ]);
+          const markLength = dom.getMarkLengthBySelectRange(
+            bodyRef.current,
+            range,
+            withinRangeNodes
+          );
 
-          const getMarkLength = () => {
-            if (isOneContainerSelected) {
-              // Check if container is a part of article body
-              if (!bodyRef.current?.contains(startContainer)) {
-                return 0;
-              } else {
-                return endOffset - startOffset;
-              }
-            } else {
-              const selectInStartContainerLength = isStartContainerSelectable
-                ? (startContainer.textContent?.length ?? 0) - startOffset
-                : 0;
-              const selectInEndContainerLength = isEndContainerSelectable
-                ? endOffset
-                : 0;
-              return (
-                selectInStartContainerLength +
-                betweenTextLength +
-                selectInEndContainerLength
-              );
-            }
-          };
-
-          const markLength = getMarkLength();
-
-          if (!markLength) {
-            selection.removeAllRanges();
-            return;
-          }
-
-          markRef.current?.markRanges(
-            [
+          if (markLength) {
+            const startContainerMarkId =
+              dom.getMarkNodeAttributes(startContainer);
+            const startPosition =
+              dom.getNodesTextContentLength(beforeRangeNodes) +
+              (!!startContainerMarkId ? 0 : startOffset);
+            markRef.current?.markRanges(
+              [
+                {
+                  start: startPosition,
+                  length: markLength,
+                },
+              ],
               {
-                start: startPosition,
-                length: markLength,
-              },
-            ],
-            {
-              element: "mark",
-              className: `${classes.outlinedText}`,
-              done: (markedBlocks) => {
-                if (markedBlocks) {
-                  selection.removeAllRanges();
-                  setCurrentHtml(bodyRef.current?.innerHTML);
-                }
-              },
-            }
-          );
-        });
+                element: "mark",
+                className: `${classes.outlinedText}`,
+                done: async (markedBlocks) => {
+                  if (markedBlocks) {
+                    selection.removeAllRanges();
+                    // remove old marks to prevent overlapping
+                    await dom.unmark(markRef.current, marksToRemove);
+                    Array.from(marksToRemove).forEach((mark) => {
+                      dom.setMarkAsNotSelected(bodyRef.current, mark.id);
+                    });
+                    setCurrentHtml(bodyRef.current?.innerHTML);
+                  }
+                },
+              }
+            );
+          }
+        }
       }
     }
   }, [classes.outlinedText]);
@@ -277,16 +245,6 @@ const Article = () => {
   }, [updatedArticleSubResult]);
 
   useEffect(() => {
-    const onClick = (markId: number) => {
-      if (secretId) {
-        markRef.current?.unmark({
-          element: `#${markId}`,
-          done: () => {
-            setCurrentHtml(bodyRef.current?.innerHTML);
-          },
-        });
-      }
-    };
     if (bodyRef.current && !markRef.current) {
       markRef.current = new Mark(bodyRef.current as any);
     }
@@ -294,18 +252,17 @@ const Article = () => {
       bodyRef.current.innerHTML = article.html;
       setCurrentHtml(bodyRef.current.innerHTML);
       markRef.current?.setEventListeners({
-        onClick: onClick,
-        onMouseOver: (markId: number) => {
-          bodyRef.current?.querySelectorAll(`#${markId}`).forEach((n) => {
-            n.setAttribute("selected", "true");
-          });
+        onClick: async (markId) => {
+          if (secretId) {
+            await dom.unmark(markRef.current, [{ id: markId }]);
+            setCurrentHtml(bodyRef.current?.innerHTML);
+          }
         },
-        onMouseLeave: (markId: number) => {
-          bodyRef.current
-            ?.querySelectorAll(`#${markId}[selected]`)
-            .forEach((n) => {
-              n.removeAttribute("selected");
-            });
+        onMouseOver: (markId) => {
+          dom.setMarkAsSelected(bodyRef.current, markId);
+        },
+        onMouseLeave: (markId) => {
+          dom.setMarkAsNotSelected(bodyRef.current, markId);
         },
       });
     }
