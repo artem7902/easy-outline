@@ -1,0 +1,11 @@
+{
+  "name": "easy-outline",
+  "version": "0.1.0",
+  "devDependencies": {
+    "husky": "^8.0.3"
+  },
+  "scripts": {
+    "prepare": "husky install",
+    "format": "cd aws && npm run format && cd ../frontend && npm run format"
+  }
+}
