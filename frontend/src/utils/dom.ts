@@ -163,3 +163,11 @@ export const unmark = (
     )
   );
 };
+
+export const formatHtml = (html: string) => {
+  // formats article html code as if it was really inserted to the document
+  const fakeDiv = window.document.createElement("div");
+  fakeDiv.innerHTML = html;
+  const originalHtml = fakeDiv.innerHTML;
+  return originalHtml;
+};

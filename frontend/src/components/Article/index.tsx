@@ -6,6 +6,7 @@ import React, {
   useState,
 } from "react";
 import {
+  Button,
   CircularProgress,
   Container,
   Divider,
@@ -16,8 +17,16 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import EditIcon from "@mui/icons-material/Edit";
 import { LoadingButton } from "@mui/lab";
+import clsx from "clsx";
+
+import { CKEditor } from "@ckeditor/ckeditor5-react";
+//@ts-ignore
+import Editor from "ckeditor5-custom-build/build/ckeditor";
+
 import { toast } from "react-toastify";
 import { useParams } from "react-router-dom";
 
@@ -41,6 +50,9 @@ import { dom } from "@utils";
 import { Header } from "./Header";
 
 const useStyles = makeStyles()((theme) => ({
+  hidden: {
+    display: "none",
+  },
   loadingWrapper: {
     display: "flex",
     justifyContent: "center",
@@ -59,19 +71,21 @@ const useStyles = makeStyles()((theme) => ({
   sourceWrapper: {
     textAlign: "center",
   },
+  articleButtonsPannel: {
+    display: "flex",
+    justifyContent: "right",
+  },
   articleBody: {
-    marginLeft: theme.spacing(1),
-    marginRight: theme.spacing(1),
+    marginTop: 27, // ToDo cleanup
+    paddingLeft: theme.spacing(1),
+    paddingRight: theme.spacing(1),
   },
   outlinedText: {
     backgroundColor: "white",
     textDecorationLine: "underline",
     textDecorationColor: "red",
-    cursor: "pointer",
-    ":hover": {
-      backgroundColor: "rgb(0 90 255 / 15%)",
-    },
     "&[selected]": {
+      cursor: "pointer",
       backgroundColor: "rgb(0 90 255 / 15%)",
     },
   },
@@ -107,6 +121,7 @@ const Article = () => {
   const { classes } = useStyles();
 
   const bodyRef = useRef<HTMLDivElement | null>(null);
+  const editorRef = useRef<Editor | null>();
   const markRef = useRef<Mark | null>(null);
 
   const { articleId, secretId } = useParams<{
@@ -123,6 +138,9 @@ const Article = () => {
   const { updatedArticleSubResult } = useUpdatedArticleSub(articleId);
 
   const [currentHtml, setCurrentHtml] = useState<string>();
+  const [originalHtml, setOriginalHtml] = useState<string>();
+
+  const [isEditMode, setIsEditMode] = useState<boolean>();
 
   const [article, setArticle] = useState<IArticle>();
 
@@ -213,6 +231,18 @@ const Article = () => {
     }
   }, [classes.outlinedText]);
 
+  const htmlEqual = useCallback((originalHtml: string, currentHtml: string) => {
+    if (editorRef.current) {
+      const editor = editorRef.current;
+      return (
+        editor.data.stringify(editor.data.parse(originalHtml)) ===
+        editor.data.stringify(editor.data.parse(currentHtml))
+      );
+    } else {
+      return originalHtml === currentHtml;
+    }
+  }, []);
+
   useEffect(() => {
     if (getArticleError || saveArticleError) {
       toast(ERROR_MESSAGES.BACKEND_ERROR, {
@@ -249,8 +279,15 @@ const Article = () => {
       markRef.current = new Mark(bodyRef.current as any);
     }
     if (bodyRef.current && article) {
-      bodyRef.current.innerHTML = article.html;
-      setCurrentHtml(bodyRef.current.innerHTML);
+      const formattedHtml = dom.formatHtml(article.html);
+      setCurrentHtml(formattedHtml);
+      setOriginalHtml(formattedHtml);
+    }
+  }, [article]);
+
+  useEffect(() => {
+    if (bodyRef.current) {
+      bodyRef.current.innerHTML = currentHtml || "";
       markRef.current?.setEventListeners({
         onClick: async (markId) => {
           if (secretId) {
@@ -266,7 +303,7 @@ const Article = () => {
         },
       });
     }
-  }, [article, secretId]);
+  }, [currentHtml, secretId]);
 
   useEffect(() => {
     if (secretId && bodyRef.current && article) {
@@ -280,14 +317,10 @@ const Article = () => {
   }, [onMouseUp, secretId, article]);
 
   const isArticleChanged = useMemo(() => {
-    if (!article?.html || !currentHtml) return false;
-    // formats article html code as if it was really inserted to the document
-    const fakeDiv = window.document.createElement("div");
-    fakeDiv.innerHTML = article.html;
-    const originalHtml = fakeDiv.innerHTML;
+    if (!originalHtml || !currentHtml) return false;
     // just compare html code strings
-    return currentHtml !== originalHtml;
-  }, [article?.html, currentHtml]);
+    return !htmlEqual(originalHtml, currentHtml);
+  }, [originalHtml, currentHtml, htmlEqual]);
 
   // Article block render start
   const renderTitle = useMemo(() => {
@@ -301,7 +334,6 @@ const Article = () => {
   const renderSource = useMemo(() => {
     return article?.sourceUrl ? (
       <div className={classes.sourceWrapper}>
-        {" "}
         <Link
           target="_blank"
           rel="noreferrer"
@@ -315,12 +347,63 @@ const Article = () => {
   }, [article?.sourceUrl, classes.source, classes.sourceWrapper]);
 
   const renderArticle = useMemo(() => {
+    const renderArticleButtonsPannel = (
+      <div className={classes.articleButtonsPannel}>
+        {!isEditMode ? (
+          <Button
+            startIcon={<EditIcon />}
+            onClick={() => setIsEditMode(true)}
+            aria-label="edit"
+            variant="contained"
+            color="primary"
+          >
+            Switch To Edit Mode
+          </Button>
+        ) : (
+          <Button
+            startIcon={<AutoFixHighIcon />}
+            onClick={() => setIsEditMode(false)}
+            aria-label="outline"
+            variant="contained"
+            color="primary"
+          >
+            Switch To Outline Mode
+          </Button>
+        )}
+      </div>
+    );
     return (
       <PerfectScrollbar>
         <Container className={classes.articleWrapper} maxWidth="xl">
           {renderTitle}
           {renderSource}
-          <div ref={bodyRef} className={classes.articleBody}></div>
+          {secretId && renderArticleButtonsPannel}
+          {
+            <>
+              <div
+                ref={bodyRef}
+                className={clsx(classes.articleBody, {
+                  [classes.hidden]: isEditMode,
+                })}
+              ></div>
+              {secretId && (
+                <div className={clsx({ [classes.hidden]: !isEditMode })}>
+                  <CKEditor
+                    ref={(ref) => {
+                      editorRef.current = ref?.editor;
+                    }}
+                    editor={Editor}
+                    data={bodyRef.current?.innerHTML}
+                    onChange={(event, editor) => {
+                      const data = editor.data.get();
+                      setCurrentHtml(data);
+                    }}
+                    disabled={!secretId || !isEditMode}
+                  />
+                </div>
+              )}
+            </>
+          }
         </Container>
       </PerfectScrollbar>
     );
@@ -328,8 +411,12 @@ const Article = () => {
     renderTitle,
     renderSource,
     bodyRef,
+    isEditMode,
+    secretId,
     classes.articleBody,
     classes.articleWrapper,
+    classes.articleButtonsPannel,
+    classes.hidden,
   ]);
   // Article block render end
 
