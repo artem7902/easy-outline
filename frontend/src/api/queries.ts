@@ -12,6 +12,7 @@ export const getPublicArticle = gql`
         authors
         publishDate
         sourceUrl
+        lang
       }
     }
   }

@@ -26,6 +26,7 @@ type Article {
     authors: String
     publishDate: String
     sourceUrl: String
+    lang: String
 }
 
 type OutlineRecord {
@@ -39,11 +40,4 @@ type OutlineSecretRecord {
     secretId: String!
     article: Article
     createdAt: Int
-}
-
-input ArticleInput {
-  title: String
-  originalText: String
-  authors: String
-  publishDate: String
 }

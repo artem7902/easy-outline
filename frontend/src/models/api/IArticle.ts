@@ -6,4 +6,5 @@ export interface IArticle {
   authors?: string[];
   publishDate?: string;
   sourceUrl: string;
+  lang?: string;
 }
