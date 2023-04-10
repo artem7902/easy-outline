@@ -21,3 +21,10 @@ code {
 .toast-notification .Toastify__toast-body{
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* ToDo cleanup */
+.ck.ck-editor__editable_inline{
+  padding-left: 7.5px;
+  padding-right: 7.5px;
+  margin-top: 12px;
+}

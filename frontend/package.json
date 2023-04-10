@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@ckeditor/ckeditor5-react": "^6.0.0",
     "@emotion/react": "^11.10.6",
     "@emotion/styled": "^11.10.6",
     "@mui/icons-material": "^5.11.11",
@@ -10,6 +11,7 @@
     "@mui/material": "^5.11.11",
     "@reduxjs/toolkit": "^1.9.3",
     "aws-amplify": "^5.0.23",
+    "ckeditor5-custom-build": "file:ckeditor5",
     "graphql": "^16.6.0",
     "graphql-request": "^5.2.0",
     "lodash": "^4.17.21",
