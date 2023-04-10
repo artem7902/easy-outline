@@ -12,6 +12,7 @@ export const updatedArticleSub = gql`
         authors
         publishDate
         sourceUrl
+        lang
       }
     }
   }

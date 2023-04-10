@@ -12,6 +12,7 @@ export const addArticle = gql`
         html
         authors
         publishDate
+        lang
       }
     }
   }
@@ -29,6 +30,7 @@ export const updateArticle = gql`
         authors
         publishDate
         sourceUrl
+        lang
       }
     }
   }

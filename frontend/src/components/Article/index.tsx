@@ -347,7 +347,7 @@ const Article = () => {
   }, [article?.sourceUrl, classes.source, classes.sourceWrapper]);
 
   const renderArticle = useMemo(() => {
-    const renderArticleButtonsPannel = (
+    const renderArticleButtonsPannel = secretId && (
       <div className={classes.articleButtonsPannel}>
         {!isEditMode ? (
           <Button
@@ -372,38 +372,46 @@ const Article = () => {
         )}
       </div>
     );
+
+    const renderOutlineMode = (
+      <div
+        ref={bodyRef}
+        className={clsx(classes.articleBody, {
+          [classes.hidden]: isEditMode,
+        })}
+      ></div>
+    );
+
+    const renderEditorMode = article && secretId && (
+      <div className={clsx({ [classes.hidden]: !isEditMode })}>
+        <CKEditor
+          config={{
+            language: {
+              ui: "en",
+              content: article?.lang,
+            },
+          }}
+          ref={(ref) => {
+            editorRef.current = ref?.editor;
+          }}
+          editor={Editor}
+          data={bodyRef.current?.innerHTML}
+          onChange={(event, editor) => {
+            const data = editor.data.get();
+            setCurrentHtml(data);
+          }}
+          disabled={!secretId || !isEditMode}
+        />
+      </div>
+    );
     return (
       <PerfectScrollbar>
         <Container className={classes.articleWrapper} maxWidth="xl">
           {renderTitle}
           {renderSource}
-          {secretId && renderArticleButtonsPannel}
-          {
-            <>
-              <div
-                ref={bodyRef}
-                className={clsx(classes.articleBody, {
-                  [classes.hidden]: isEditMode,
-                })}
-              ></div>
-              {secretId && (
-                <div className={clsx({ [classes.hidden]: !isEditMode })}>
-                  <CKEditor
-                    ref={(ref) => {
-                      editorRef.current = ref?.editor;
-                    }}
-                    editor={Editor}
-                    data={bodyRef.current?.innerHTML}
-                    onChange={(event, editor) => {
-                      const data = editor.data.get();
-                      setCurrentHtml(data);
-                    }}
-                    disabled={!secretId || !isEditMode}
-                  />
-                </div>
-              )}
-            </>
-          }
+          {renderArticleButtonsPannel}
+          {renderOutlineMode}
+          {renderEditorMode}
         </Container>
       </PerfectScrollbar>
     );
@@ -413,6 +421,7 @@ const Article = () => {
     bodyRef,
     isEditMode,
     secretId,
+    article,
     classes.articleBody,
     classes.articleWrapper,
     classes.articleButtonsPannel,

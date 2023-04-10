@@ -36,7 +36,8 @@ def main(event, context):
             'html': clean_html_tags(article.article_html),
             "authors": article.authors,
             "publishDate": article.publish_date if not article.publish_date else Decimal(article.publish_date.timestamp()),
-            "sourceUrl": article_url
+            "sourceUrl": article_url,
+            "lang": article.extractor.language
         },
         "createdAt": Decimal(time.time()),
         "secretId": str(shortuuid.uuid())
