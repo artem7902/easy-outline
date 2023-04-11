@@ -33,7 +33,7 @@ jobs:
         echo "REACT_APP_STAGE=prod" >> $GITHUB_ENV
     - name: Install NPM dependencies
       run: |
-        cd $GITHUB_WORKSPACE/shared && npm install && npm run build
+        cd $GITHUB_WORKSPACE/shared && npm install
         cd $GITHUB_WORKSPACE/aws && npm install
         cd $GITHUB_WORKSPACE/frontend && npm install
     - name: Deploy AWS infrastructure
