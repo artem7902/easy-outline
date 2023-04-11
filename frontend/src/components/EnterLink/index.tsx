@@ -88,7 +88,7 @@ const EnterLink = () => {
     <div className={classes.root}>
       <img
         className={classes.logo}
-        src={`${process.env.PUBLIC_URL}/assets/logo.png`}
+        src={`${process.env.PUBLIC_URL}/assets/logo.svg`}
         alt="logo"
       />
       <Box
