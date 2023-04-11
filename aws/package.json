@@ -1,6 +1,6 @@
 {
   "name": "easy-outline-aws",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "bin": {
     "cdk": "bin/cdk.js"
   },
