@@ -12,6 +12,7 @@
     "@reduxjs/toolkit": "^1.9.3",
     "aws-amplify": "^5.0.23",
     "ckeditor5-custom-build": "file:ckeditor5",
+    "easy-outline-shared": "file:../shared",
     "graphql": "^16.6.0",
     "graphql-request": "^5.2.0",
     "lodash": "^4.17.21",
@@ -24,7 +25,6 @@
     "react-toastify": "^9.1.1",
     "redux": "^4.2.1",
     "redux-thunk": "^2.4.2",
-    "shared": "../shared",
     "swr": "^2.1.2",
     "tss-react": "^4.7.1",
     "validate.js": "^0.13.1",
@@ -66,6 +66,7 @@
     "@types/validator": "^13.7.13",
     "prettier": "2.8.4",
     "react-scripts": "^5.0.1",
+    "ts-loader": "^9.4.2",
     "tsconfig-paths-webpack-plugin": "^4.0.1",
     "typescript": "4.9.5"
   }

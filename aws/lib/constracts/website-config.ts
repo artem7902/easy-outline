@@ -10,19 +10,22 @@ import { Construct } from "constructs";
 import { Duration } from "aws-cdk-lib";
 
 export interface IWebsiteConfigProps {
-  hostedZone: route53.IHostedZone;
-  domainName: string;
+  hostedZone?: route53.IHostedZone;
+  domainName?: string;
   s3BucketName: string;
-  certificate: ICertificate;
+  certificate?: ICertificate;
 }
 
 export class WebsiteConfig extends Construct {
   public readonly websiteS3Bucket: s3.Bucket;
+  public readonly cloudFrontDistribution: cloudfront.Distribution;
 
   constructor(scope: Construct, id: string, props: IWebsiteConfigProps) {
     super(scope, id);
 
     const { hostedZone, s3BucketName, certificate, domainName } = props;
+
+    const setCustomDomain = hostedZone && domainName && certificate;
 
     // Setup S3
     this.websiteS3Bucket = new s3.Bucket(this, "WebsiteBucket", {
@@ -46,7 +49,7 @@ export class WebsiteConfig extends Construct {
     this.websiteS3Bucket.addToResourcePolicy(websiteS3CloudfrontStatement);
 
     // Setup CloudFront
-    const websiteCloudFrontDistribution = new cloudfront.Distribution(
+    this.cloudFrontDistribution = new cloudfront.Distribution(
       this,
       "WebsiteCloudFrontDistribution",
       {
@@ -77,19 +80,20 @@ export class WebsiteConfig extends Construct {
             ttl: Duration.seconds(0),
           },
         ],
-        domainNames: [domainName],
+        domainNames: setCustomDomain ? [domainName] : undefined,
         certificate,
         priceClass: cloudfront.PriceClass.PRICE_CLASS_100,
       }
     );
-
-    // Point DNS to CloudFront
-    new route53.ARecord(this, "websiteARecord", {
-      recordName: domainName,
-      zone: hostedZone,
-      target: route53.RecordTarget.fromAlias(
-        new targets.CloudFrontTarget(websiteCloudFrontDistribution)
-      ),
-    });
+    if (setCustomDomain) {
+      // Point DNS to CloudFront
+      new route53.ARecord(this, "websiteARecord", {
+        recordName: domainName,
+        zone: hostedZone,
+        target: route53.RecordTarget.fromAlias(
+          new targets.CloudFrontTarget(this.cloudFrontDistribution)
+        ),
+      });
+    }
   }
 }

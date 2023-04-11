@@ -5,7 +5,6 @@ import { ITable } from "aws-cdk-lib/aws-dynamodb";
 import { IFunction } from "aws-cdk-lib/aws-lambda";
 import { SchemaFile } from "aws-cdk-lib/aws-appsync";
 import { ICertificate } from "aws-cdk-lib/aws-certificatemanager";
-import * as targets from "aws-cdk-lib/aws-route53-targets";
 
 import { Construct } from "constructs";
 
@@ -37,8 +36,8 @@ export interface IAppSyncConfigProps {
   dynamoTables: { [key: string]: ITable };
   lambdas: { [key: string]: IFunction };
   resolverTemplatePaths: IGraphQLResolverTemplatePaths;
-  hostedZone: route53.IHostedZone;
-  certificate: ICertificate;
+  hostedZone?: route53.IHostedZone;
+  certificate?: ICertificate;
   domainName: string;
 }
 
@@ -59,6 +58,8 @@ export class AppSyncConfig extends Construct {
       hostedZone,
     } = props;
 
+    const setCustomDomain = hostedZone && domainName && certificate;
+
     const { dynamo: dynamoResolvers, lambda: lambdaResolvers } =
       resolverTemplatePaths;
 
@@ -68,10 +69,12 @@ export class AppSyncConfig extends Construct {
       schema: new SchemaFile({
         filePath: `${__dirname}/../../appsync/api-scheme.gql`,
       }),
-      domainName: {
-        domainName,
-        certificate,
-      },
+      domainName: setCustomDomain
+        ? {
+            domainName,
+            certificate,
+          }
+        : undefined,
     });
     this.graphQlApiKey = new appsync.CfnApiKey(this, "AppsyncApiKey", {
       apiId: this.graphQlApi.apiId,
@@ -214,11 +217,13 @@ export class AppSyncConfig extends Construct {
       }
     });
 
-    // Point DNS to CloudFront
-    new route53.CnameRecord(this, "apiCNameRecord", {
-      recordName: domainName,
-      zone: hostedZone,
-      domainName: this.graphQlApi.appSyncDomainName,
-    });
+    if (setCustomDomain) {
+      // Point DNS to CloudFront
+      new route53.CnameRecord(this, "apiCNameRecord", {
+        recordName: domainName,
+        zone: hostedZone,
+        domainName: this.graphQlApi.appSyncDomainName,
+      });
+    }
   }
 }

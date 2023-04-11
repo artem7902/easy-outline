@@ -14,6 +14,9 @@ import { AppSyncConfig } from "./constracts/appsync-config";
 import getConfig, { STAGE } from "../config";
 
 export class CdkStack extends cdk.Stack {
+  private rootHostedZone?: route53.IHostedZone;
+  private acmCertificate?: acm.Certificate;
+
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
     const stage = STAGE;
@@ -21,22 +24,25 @@ export class CdkStack extends cdk.Stack {
     const websiteDomain = config.WEBSITE_DOMAIN_NAME;
     const apiDomain = config.API_DOMAIN_NAME;
     const websiteBucketName = config.WEBSITE_S3_BUCKET_NAME;
+    const useCustomDomain = config.ROOT_HOSTED_ZONE_ID && config.MAIN_DOMAIN;
 
-    const rootHostedZone = route53.HostedZone.fromHostedZoneAttributes(
-      this,
-      "RootHostedZone",
-      {
-        hostedZoneId: config.ROOT_HOSTED_ZONE_ID,
-        zoneName: config.MAIN_DOMAIN,
-      }
-    );
+    if (useCustomDomain) {
+      this.rootHostedZone = route53.HostedZone.fromHostedZoneAttributes(
+        this,
+        "RootHostedZone",
+        {
+          hostedZoneId: config.ROOT_HOSTED_ZONE_ID,
+          zoneName: config.MAIN_DOMAIN,
+        }
+      );
 
-    // create ACM certificate
-    const acmCertificate = new acm.Certificate(this, "CloudFrontCertficate", {
-      domainName: websiteDomain,
-      subjectAlternativeNames: [apiDomain],
-      validation: acm.CertificateValidation.fromDns(rootHostedZone),
-    });
+      // create ACM certificate
+      this.acmCertificate = new acm.Certificate(this, "CloudFrontCertficate", {
+        domainName: websiteDomain,
+        subjectAlternativeNames: [apiDomain],
+        validation: acm.CertificateValidation.fromDns(this.rootHostedZone),
+      });
+    }
 
     // Lambda
 
@@ -86,15 +92,15 @@ export class CdkStack extends cdk.Stack {
       dynamoTables: { [config.TABLE_NAMES.ARTICLES]: articlesDynamodbTable },
       lambdas: { [config.LAMBDA_NAMES.ADD_ARTICLE]: processingLambda },
       resolverTemplatePaths: config.GRAPH_QL_RESOLVER_TEMPLATE_PATHS,
-      hostedZone: rootHostedZone,
-      certificate: acmCertificate,
+      hostedZone: this.rootHostedZone,
+      certificate: this.acmCertificate,
     });
 
     // React website
     const websiteConfig = new WebsiteConfig(this, "WebsiteConfig", {
       domainName: websiteDomain,
-      hostedZone: rootHostedZone,
-      certificate: acmCertificate,
+      hostedZone: this.rootHostedZone,
+      certificate: this.acmCertificate,
       s3BucketName: websiteBucketName,
     });
 
@@ -107,5 +113,24 @@ export class CdkStack extends cdk.Stack {
     new cdk.CfnOutput(this, "WebsiteS3BucketName", {
       value: websiteConfig.websiteS3Bucket.bucketName,
     });
+
+    if (!useCustomDomain) {
+      new cdk.CfnOutput(this, "AppsyncGraphQLUrl", {
+        value: appSyncConfig.graphQlApi.graphqlUrl,
+      });
+      new cdk.CfnOutput(this, "AppsyncGraphQLWSUrl", {
+        value: cdk.Fn.join("", [
+          "wss://",
+          cdk.Fn.select(
+            1,
+            cdk.Fn.split("https://", appSyncConfig.graphQlApi.graphqlUrl)
+          ),
+          "/realtime",
+        ]),
+      });
+      new cdk.CfnOutput(this, "WebsiteUrl", {
+        value: websiteConfig.cloudFrontDistribution.distributionDomainName,
+      });
+    }
   }
 }
