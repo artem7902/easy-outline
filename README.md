@@ -1,10 +1,10 @@
-# Easy Outline is a simple way to highlight and share articles 
+# Easy Outline
 
 The goal of this project is to create a simple and minimalistic solution which allows to highlight (or outline) articles and different documents in a quick manner and send it to anyone with one button click.
 
 ## Production website
 
-Would you like to just use the app? You can do it right away! Simply go to [the official website](https://easy-outline.com) and create your first outine!
+Would like to just use the app? You can do it right away! Go to [the official website](https://easy-outline.com) and create your first outine!
 
 ## Preview (dev) website
 
@@ -62,7 +62,7 @@ If you would like to have it as well, please follow the steps:
     ```
     cd frontend && npm run deploy
     ```
-11. Open your wesite in a browser and enjoy!
+11. Open your website in a browser and enjoy!
 
 ## Development
 
@@ -81,28 +81,27 @@ Just follow steps `1-4` from the [Self-Hosted section](#self-hosted) with `STAGE
     ├── shared                  # Shared models, configuration files, utils, etc.
     └── README.md               # This readme :)
 
-### Frontend 
+### React App 
 
-To start a client in dev mode with default configuration just rename `frontend/.env.example` to `frontend/.env` and run:
-```
-cd frontend && npm start
-```
+To start the react app in dev mode using the default configuration: 
+1. Rename `frontend/.env.example` to `frontend/.env`
+2. Run ``` cd frontend && npm start ```
 
 If you have your own AWS API deployed then open `frontend/.env` and replace `REACT_APP_APPSYNC_API_KEY` variable with your key.
 
-Also, if you are using AWS provided domain names, uncomment and set `REACT_APP_APPSYNC_URL` and `REACT_APP_APPSYNC_WS_URL` with appropriate values from AWS deployment output.
+Also, if you are using AWS provided domain names, uncomment and set `REACT_APP_APPSYNC_URL` and `REACT_APP_APPSYNC_WS_URL` with appropriate values from the AWS deployment output.
 
 Please check out `frontend/README.md` to get more info and see commands list.
 
 ### AWS 
 
-To deploy your own AWS stack just follow steps `5-7` from the [Self-Hosted section](#self-hosted).
+To deploy your own AWS API just follow steps `5-7` from the [Self-Hosted section](#self-hosted).
 
-`NOTE:` you can deploy to AWS without owning a domain name (AWS will generate URLs for you):
+<b>NOTE:</b> you can deploy to AWS without owning a domain name (AWS will generate URLs for you):
 
 1. Open `shared/config.ts` and set `MAIN_DOMAIN=""`
 2. Open `aws/config.js`, set `ROOT_HOSTED_ZONE_ID=""`
 3. Deploy API to AWS ``` cd aws && cdk deploy ```
-4. The deployment output will contain website and API URLs which you can use to configure the frontend
+4. The deployment output will contain website and API URLs
 
 Please check out `aws/README.md` to get more info and see commands list.
