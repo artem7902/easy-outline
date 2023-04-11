@@ -341,7 +341,7 @@ const Article = () => {
           href={article.sourceUrl}
         >
           Source
-        </Link>{" "}
+        </Link>
       </div>
     ) : undefined;
   }, [article?.sourceUrl, classes.source, classes.sourceWrapper]);
@@ -432,7 +432,7 @@ const Article = () => {
   // Share block render start
   const renderReadUrlField = useMemo(() => {
     if (!articleId) return;
-    const readUrl = `${window.location.host}/articles/${articleId}`;
+    const readUrl = `${window.location.protocol}//${window.location.host}/articles/${articleId}`;
     return (
       <TextField
         className={classes.readUrl}
@@ -459,7 +459,7 @@ const Article = () => {
 
   const renderWriteUrlField = useMemo(() => {
     if (!secretId) return;
-    const writeUrl = `${window.location.host}/articles/${articleId}/${secretId}`;
+    const writeUrl = `${window.location.protocol}//${window.location.host}/articles/${articleId}/${secretId}`;
     return (
       <TextField
         className={classes.writeUrl}
