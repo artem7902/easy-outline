@@ -1,0 +1,53 @@
+on:
+  push:
+    branches-ignore: [ "develop", "master" ]
+jobs:
+  deploy:
+    name: Build a branch
+    runs-on: ubuntu-20.04
+    environment: Main
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: us-east-1
+      STAGE: dev
+      REACT_APP_STAGE: dev
+      AWS_S3_BUCKET_NAME: easy-outline-dev
+      REACT_APP_APPSYNC_API_KEY: mock
+    steps:
+    - uses: actions/checkout@v3
+    - name: Use Node.js v16
+      uses: actions/setup-node@v3
+      with:
+        node-version: 16
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.7' 
+    - name: Git config
+      run: |
+        git config --global user.name 'Github Actions'
+        git config --global user.email 'noreply@github.com'
+    - name: Install AWS CDK
+      run: npm install -g aws-cdk
+    - name: Install NPM dependencies
+      run: |
+        cd $GITHUB_WORKSPACE && npm install
+        cd $GITHUB_WORKSPACE/shared && npm install
+        cd $GITHUB_WORKSPACE/aws && npm install
+        cd $GITHUB_WORKSPACE/frontend && npm install
+    - name: Build AWS infrastructure
+      run: |
+        cd $GITHUB_WORKSPACE/aws && cdk synth
+    - name: Build SPA
+      run: |
+        cd $GITHUB_WORKSPACE/frontend && npm run build
+    - name: Code formatting with prettier
+      run: |
+        cd $GITHUB_WORKSPACE && npm run format && git status --porcelain
+        if [ -n "$(git status --porcelain)" ]; then
+            git add . &&
+            git commit -m "Auto code formatting" &&
+            git push origin $GITHUB_REF_NAME;
+        else
+          echo "no changes";
+        fi

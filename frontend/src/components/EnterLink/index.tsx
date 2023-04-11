@@ -7,9 +7,9 @@ import { toast } from "react-toastify";
 
 import { useNavigate } from "react-router-dom";
 
-import { useAddArticle } from "@api/index";
+import { ReactComponent as Logo } from "@images/logo.svg";
 
-import logo from "../../logo.png";
+import { useAddArticle } from "@api/index";
 
 const VALIDATION_RULES = {
   articleUrl: {
@@ -27,6 +27,7 @@ const useStyles = makeStyles()((theme) => ({
   },
   logo: {
     width: "95vw",
+    height: "auto",
     maxWidth: "700px",
     marginTop: "20vh",
   },
@@ -88,7 +89,7 @@ const EnterLink = () => {
 
   return (
     <div className={classes.root}>
-      <img className={classes.logo} src={logo} alt="logo" />
+      <Logo className={classes.logo} />
       <Box
         className={classes.form}
         component="form"

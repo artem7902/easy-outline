@@ -6,6 +6,7 @@ import React, {
   useState,
 } from "react";
 import {
+  Button,
   CircularProgress,
   Container,
   Divider,
@@ -16,8 +17,16 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import EditIcon from "@mui/icons-material/Edit";
 import { LoadingButton } from "@mui/lab";
+import clsx from "clsx";
+
+import { CKEditor } from "@ckeditor/ckeditor5-react";
+//@ts-ignore
+import Editor from "ckeditor5-custom-build/build/ckeditor";
+
 import { toast } from "react-toastify";
 import { useParams } from "react-router-dom";
 
@@ -41,6 +50,9 @@ import { dom } from "@utils";
 import { Header } from "./Header";
 
 const useStyles = makeStyles()((theme) => ({
+  hidden: {
+    display: "none",
+  },
   loadingWrapper: {
     display: "flex",
     justifyContent: "center",
@@ -59,19 +71,21 @@ const useStyles = makeStyles()((theme) => ({
   sourceWrapper: {
     textAlign: "center",
   },
+  articleButtonsPannel: {
+    display: "flex",
+    justifyContent: "right",
+  },
   articleBody: {
-    marginLeft: theme.spacing(1),
-    marginRight: theme.spacing(1),
+    marginTop: 27, // ToDo cleanup
+    paddingLeft: theme.spacing(1),
+    paddingRight: theme.spacing(1),
   },
   outlinedText: {
     backgroundColor: "white",
     textDecorationLine: "underline",
     textDecorationColor: "red",
-    cursor: "pointer",
-    ":hover": {
-      backgroundColor: "rgb(0 90 255 / 15%)",
-    },
     "&[selected]": {
+      cursor: "pointer",
       backgroundColor: "rgb(0 90 255 / 15%)",
     },
   },
@@ -107,6 +121,7 @@ const Article = () => {
   const { classes } = useStyles();
 
   const bodyRef = useRef<HTMLDivElement | null>(null);
+  const editorRef = useRef<Editor | null>();
   const markRef = useRef<Mark | null>(null);
 
   const { articleId, secretId } = useParams<{
@@ -123,6 +138,9 @@ const Article = () => {
   const { updatedArticleSubResult } = useUpdatedArticleSub(articleId);
 
   const [currentHtml, setCurrentHtml] = useState<string>();
+  const [originalHtml, setOriginalHtml] = useState<string>();
+
+  const [isEditMode, setIsEditMode] = useState<boolean>();
 
   const [article, setArticle] = useState<IArticle>();
 
@@ -145,79 +163,85 @@ const Article = () => {
     navigator.clipboard.writeText(url);
   }, []);
 
-  const onMouseUp = useCallback(() => {
-    /*
-      Different scenarios:
-        1. Selected text is fully inside a big mark - ignore and do nothing
-        2. Marks bettwen the selected text (full) - remove marks and create a big one
-        3. Mark partially inside - remove mark and expand selected range to create a new concated mark
-        4. If nothing above - just create a new mark
-    */
-
+  const onMouseUp = useCallback(async () => {
     if (bodyRef.current && markRef.current && window.getSelection) {
       const selection = window.getSelection();
-      const { childNodes } = bodyRef.current;
-      const deepChildNodes = dom.getDeepChildForNodes(childNodes);
+      const deepChildNodes = dom.getDeepChildForNodes(
+        bodyRef.current.childNodes
+      );
       if (selection) {
-        _.range(0, selection.rangeCount).forEach((i) => {
+        for (const i of _.range(0, selection.rangeCount)) {
           const range = selection.getRangeAt(i);
-          const { startOffset, endOffset, startContainer, endContainer } =
-            range;
-          const beforeContainers = deepChildNodes.filter(
+          const { startOffset, startContainer, endContainer } = range;
+
+          const beforeRangeNodes = deepChildNodes.filter(
             (n) =>
               dom.rangeCompareNode(range, n) === 0 &&
               !n.isSameNode(startContainer)
           );
-          const betweenContainers = deepChildNodes.filter(
-            (n) => dom.rangeCompareNode(range, n) === 3
+          const withinRangeNodes = dom.getTextNodesWithinSelectRange(
+            bodyRef.current,
+            range,
+            deepChildNodes
           );
-          const startPosition =
-            beforeContainers.reduce(
-              (acc, n) => (acc += n.textContent?.length ?? 0),
-              0
-            ) + startOffset;
-          const betweenTextLength = betweenContainers.reduce(
-            (acc, n) => (acc += n.textContent?.length ?? 0),
-            0
+
+          const marksToRemove = dom.findMarkedNodes([
+            startContainer,
+            ...withinRangeNodes,
+            endContainer,
+          ]);
+          const markLength = dom.getMarkLengthBySelectRange(
+            bodyRef.current,
+            range,
+            withinRangeNodes
           );
-          const isOneContainerSelected =
-            startContainer.isSameNode(endContainer);
 
-          // Check all nodes for marks
-          // console.log("startContainer", startContainer);
-          // console.log("startContainer parent", startContainer.parentElement);
-          // console.log("betweenContainers", betweenContainers);
-          // console.log("endContainer", endContainer);
-          // console.log("endContainer parent", endContainer.parentNode);
-
-          const markLength = isOneContainerSelected
-            ? endOffset - startOffset
-            : (startContainer.textContent?.length ?? 0) -
-              startOffset +
-              betweenTextLength +
-              endOffset;
-          markRef.current?.markRanges(
-            [
+          if (markLength) {
+            const startContainerMarkId =
+              dom.getMarkNodeAttributes(startContainer);
+            const startPosition =
+              dom.getNodesTextContentLength(beforeRangeNodes) +
+              (!!startContainerMarkId ? 0 : startOffset);
+            markRef.current?.markRanges(
+              [
+                {
+                  start: startPosition,
+                  length: markLength,
+                },
+              ],
               {
-                start: startPosition,
-                length: markLength,
-              },
-            ],
-            {
-              element: "mark",
-              className: `${classes.outlinedText}`,
-              done: (markedBlocks) => {
-                if (markedBlocks) {
-                  selection.removeAllRanges();
-                  setCurrentHtml(bodyRef.current?.innerHTML);
-                }
-              },
-            }
-          );
-        });
+                element: "mark",
+                className: `${classes.outlinedText}`,
+                done: async (markedBlocks) => {
+                  if (markedBlocks) {
+                    selection.removeAllRanges();
+                    // remove old marks to prevent overlapping
+                    await dom.unmark(markRef.current, marksToRemove);
+                    Array.from(marksToRemove).forEach((mark) => {
+                      dom.setMarkAsNotSelected(bodyRef.current, mark.id);
+                    });
+                    setCurrentHtml(bodyRef.current?.innerHTML);
+                  }
+                },
+              }
+            );
+          }
+        }
       }
     }
   }, [classes.outlinedText]);
+
+  const htmlEqual = useCallback((originalHtml: string, currentHtml: string) => {
+    if (editorRef.current) {
+      const editor = editorRef.current;
+      return (
+        editor.data.stringify(editor.data.parse(originalHtml)) ===
+        editor.data.stringify(editor.data.parse(currentHtml))
+      );
+    } else {
+      return originalHtml === currentHtml;
+    }
+  }, []);
 
   useEffect(() => {
     if (getArticleError || saveArticleError) {
@@ -245,45 +269,41 @@ const Article = () => {
   }, [getArticleResult]);
 
   useEffect(() => {
-    if(updatedArticleSubResult){
+    if (updatedArticleSubResult) {
       setArticle(updatedArticleSubResult);
     }
-  }, [updatedArticleSubResult])
+  }, [updatedArticleSubResult]);
 
   useEffect(() => {
-    const onClick = (markId: number) => {
-      if (secretId) {
-        markRef.current?.unmark({
-          element: `#${markId}`,
-          done: () => {
-            setCurrentHtml(bodyRef.current?.innerHTML);
-          },
-        });
-      }
-    };
     if (bodyRef.current && !markRef.current) {
       markRef.current = new Mark(bodyRef.current as any);
     }
     if (bodyRef.current && article) {
-      bodyRef.current.innerHTML = article.html;
-      setCurrentHtml(bodyRef.current.innerHTML);
+      const formattedHtml = dom.formatHtml(article.html);
+      setCurrentHtml(formattedHtml);
+      setOriginalHtml(formattedHtml);
+    }
+  }, [article]);
+
+  useEffect(() => {
+    if (bodyRef.current) {
+      bodyRef.current.innerHTML = currentHtml || "";
       markRef.current?.setEventListeners({
-        onClick: onClick,
-        onMouseOver: (markId: number) => {
-          bodyRef.current?.querySelectorAll(`#${markId}`).forEach((n) => {
-            n.setAttribute("selected", "true");
-          });
+        onClick: async (markId) => {
+          if (secretId) {
+            await dom.unmark(markRef.current, [{ id: markId }]);
+            setCurrentHtml(bodyRef.current?.innerHTML);
+          }
         },
-        onMouseLeave: (markId: number) => {
-          bodyRef.current
-            ?.querySelectorAll(`#${markId}[selected]`)
-            .forEach((n) => {
-              n.removeAttribute("selected");
-            });
+        onMouseOver: (markId) => {
+          dom.setMarkAsSelected(bodyRef.current, markId);
+        },
+        onMouseLeave: (markId) => {
+          dom.setMarkAsNotSelected(bodyRef.current, markId);
         },
       });
     }
-  }, [article, secretId]);
+  }, [currentHtml, secretId]);
 
   useEffect(() => {
     if (secretId && bodyRef.current && article) {
@@ -297,14 +317,10 @@ const Article = () => {
   }, [onMouseUp, secretId, article]);
 
   const isArticleChanged = useMemo(() => {
-    if (!article?.html || !currentHtml) return false;
-    // formats article html code as if it was really inserted to the document
-    const fakeDiv = window.document.createElement("div");
-    fakeDiv.innerHTML = article.html;
-    const originalHtml = fakeDiv.innerHTML;
+    if (!originalHtml || !currentHtml) return false;
     // just compare html code strings
-    return currentHtml !== originalHtml;
-  }, [article?.html, currentHtml]);
+    return !htmlEqual(originalHtml, currentHtml);
+  }, [originalHtml, currentHtml, htmlEqual]);
 
   // Article block render start
   const renderTitle = useMemo(() => {
@@ -318,7 +334,6 @@ const Article = () => {
   const renderSource = useMemo(() => {
     return article?.sourceUrl ? (
       <div className={classes.sourceWrapper}>
-        {" "}
         <Link
           target="_blank"
           rel="noreferrer"
@@ -326,18 +341,77 @@ const Article = () => {
           href={article.sourceUrl}
         >
           Source
-        </Link>{" "}
+        </Link>
       </div>
     ) : undefined;
   }, [article?.sourceUrl, classes.source, classes.sourceWrapper]);
 
   const renderArticle = useMemo(() => {
+    const renderArticleButtonsPannel = secretId && (
+      <div className={classes.articleButtonsPannel}>
+        {!isEditMode ? (
+          <Button
+            startIcon={<EditIcon />}
+            onClick={() => setIsEditMode(true)}
+            aria-label="edit"
+            variant="contained"
+            color="primary"
+          >
+            Switch To Edit Mode
+          </Button>
+        ) : (
+          <Button
+            startIcon={<AutoFixHighIcon />}
+            onClick={() => setIsEditMode(false)}
+            aria-label="outline"
+            variant="contained"
+            color="primary"
+          >
+            Switch To Outline Mode
+          </Button>
+        )}
+      </div>
+    );
+
+    const renderOutlineMode = (
+      <div
+        ref={bodyRef}
+        className={clsx(classes.articleBody, {
+          [classes.hidden]: isEditMode,
+        })}
+      ></div>
+    );
+
+    const renderEditorMode = article && secretId && (
+      <div className={clsx({ [classes.hidden]: !isEditMode })}>
+        <CKEditor
+          config={{
+            language: {
+              ui: "en",
+              content: article?.lang,
+            },
+          }}
+          ref={(ref) => {
+            editorRef.current = ref?.editor;
+          }}
+          editor={Editor}
+          data={bodyRef.current?.innerHTML}
+          onChange={(event, editor) => {
+            const data = editor.data.get();
+            setCurrentHtml(data);
+          }}
+          disabled={!secretId || !isEditMode}
+        />
+      </div>
+    );
     return (
       <PerfectScrollbar>
         <Container className={classes.articleWrapper} maxWidth="xl">
           {renderTitle}
           {renderSource}
-          <div ref={bodyRef} className={classes.articleBody}></div>
+          {renderArticleButtonsPannel}
+          {renderOutlineMode}
+          {renderEditorMode}
         </Container>
       </PerfectScrollbar>
     );
@@ -345,15 +419,20 @@ const Article = () => {
     renderTitle,
     renderSource,
     bodyRef,
+    isEditMode,
+    secretId,
+    article,
     classes.articleBody,
     classes.articleWrapper,
+    classes.articleButtonsPannel,
+    classes.hidden,
   ]);
   // Article block render end
 
   // Share block render start
   const renderReadUrlField = useMemo(() => {
     if (!articleId) return;
-    const readUrl = `${window.location.host}/articles/${articleId}`;
+    const readUrl = `${window.location.protocol}//${window.location.host}/articles/${articleId}`;
     return (
       <TextField
         className={classes.readUrl}
@@ -380,7 +459,7 @@ const Article = () => {
 
   const renderWriteUrlField = useMemo(() => {
     if (!secretId) return;
-    const writeUrl = `${window.location.host}/articles/${articleId}/${secretId}`;
+    const writeUrl = `${window.location.protocol}//${window.location.host}/articles/${articleId}/${secretId}`;
     return (
       <TextField
         className={classes.writeUrl}

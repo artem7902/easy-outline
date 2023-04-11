@@ -1,6 +1,6 @@
 import useSWR from "swr";
 import useSWRMutation from "swr/mutation";
-import useSWRSubscription from 'swr/subscription'
+import useSWRSubscription from "swr/subscription";
 import * as gqlQueries from "./queries";
 import * as gqlMutations from "./mutations";
 import * as gqlSubscriptions from "./subscriptions";
@@ -70,17 +70,22 @@ export const useAddArticle = () => {
   };
 };
 
-
 export const useUpdatedArticleSub = (id?: string) => {
-  const {
-    data,
-    error
-  } = useSWRSubscription<IUpdatedArticleSubResponse, any, any>(id, (id: string, opts: any) => gqlSubscriber({
-    query: gqlSubscriptions.updatedArticleSub,
-    input: {id}
-  }, opts))
+  const { data, error } = useSWRSubscription<
+    IUpdatedArticleSubResponse,
+    any,
+    any
+  >(id, (id: string, opts: any) =>
+    gqlSubscriber(
+      {
+        query: gqlSubscriptions.updatedArticleSub,
+        input: { id },
+      },
+      opts
+    )
+  );
   return {
     updatedArticleSubResult: data?.updatedArticle.article,
-    error
-  }
-}
+    error,
+  };
+};

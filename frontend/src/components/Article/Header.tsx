@@ -6,14 +6,15 @@ import { makeStyles } from "tss-react/mui";
 
 import { useNavigate } from "react-router-dom";
 
-import logo from "../../logo-white.png";
+import { ReactComponent as LogoWhite } from "@images/logo-white.svg";
 
 const useStyles = makeStyles()((theme) => ({
   container: {
     backgroundColor: "black",
   },
   logo: {
-    width: 150,
+    width: 160,
+    height: "auto",
     cursor: "pointer",
   },
 }));
@@ -29,12 +30,7 @@ export const Header = () => {
   return (
     <AppBar className={classes.container} component="nav">
       <Toolbar>
-        <img
-          onClick={onLogoClick}
-          className={classes.logo}
-          src={logo}
-          alt="logo"
-        />
+        <LogoWhite onClick={onLogoClick} className={classes.logo} />
       </Toolbar>
     </AppBar>
   );
