@@ -30,7 +30,7 @@ export const Header = () => {
         <img
           onClick={onLogoClick}
           className={classes.logo}
-          src={`${process.env.PUBLIC_URL}/assets/logo-white.png`}
+          src={`${process.env.PUBLIC_URL}/assets/logo-white.svg`}
           alt="logo"
         />
       </Toolbar>
