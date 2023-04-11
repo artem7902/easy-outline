@@ -19,31 +19,7 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react",
-    "types": ["node"],
-    "baseUrl": "./src",
-    "paths": {
-      "@components/*": [
-        "components/*"
-      ],
-      "@models/*": [
-        "models/*"
-      ],
-      "@redux/*": [
-        "redux/*"
-      ],
-      "@api/*": [
-        "api/*"
-      ],
-      "@hooks": [
-        "hooks"
-      ],
-      "@config/*": [
-        "config/*"
-      ],
-      "@utils": [
-        "utils"
-      ],
-    }
+    "types": ["node"]
   },
   "include": [
     "src"

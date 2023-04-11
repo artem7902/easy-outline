@@ -1,14 +1,16 @@
 import { Amplify } from "aws-amplify";
 
-import { getSharedConfig } from "shared";
+import { getSharedConfig } from "easy-outline-shared";
 
 export const STAGE = process.env.REACT_APP_STAGE ?? "dev";
 
-export const { MAIN_DOMAIN, API_DOMAIN_NAME, DEFAULT_REGION } =
-  getSharedConfig(STAGE);
+const { API_DOMAIN_NAME, DEFAULT_REGION } = getSharedConfig(STAGE);
 
-export const APPSYNC_URL = `https://${API_DOMAIN_NAME}/graphql`;
-export const APPSYNC_WS_URL = `wss://${API_DOMAIN_NAME}/graphql/realtime`;
+export const APPSYNC_URL =
+  process.env.REACT_APP_APPSYNC_URL ?? `https://${API_DOMAIN_NAME}/graphql`;
+export const APPSYNC_WS_URL =
+  process.env.REACT_APP_APPSYNC_WS_URL ??
+  `wss://${API_DOMAIN_NAME}/graphql/realtime`;
 export const APPSYNC_REGION = DEFAULT_REGION;
 export const APPSYNC_API_KEY = process.env.REACT_APP_APPSYNC_API_KEY ?? "";
 
