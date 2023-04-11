@@ -1,6 +1,6 @@
-# Easy Outline is a simple way to share highlighted articles 
+# Easy Outline is a simple way to highlight and share articles 
 
-The goal of this project is to create a simple and minimalistic solution which allows to highlight (or outline) articles and different documents in a quick manner and then share it with one button click.
+The goal of this project is to create a simple and minimalistic solution which allows to highlight (or outline) articles and different documents in a quick manner and send it to anyone with one button click.
 
 ## Production website
 
@@ -8,14 +8,14 @@ Would you like to just use the app? You can do it right away! Simply go to [the 
 
 ## Preview (dev) website
 
-Eager to check out the most recent features and changes? We made it possible as well! Here is [the preview website](https://dev.easy-outline.com) but WARN YOU <b>we may break it from time to time!</b>
+Eager to check out the most recent features and changes? We made it possible as well! Here is [the preview website](https://dev.easy-outline.com) but remember that <b>we may break it from time to time!</b>
 
 ## Self-Hosted
 
 We made it really easy to deploy the app so people can use their own domain names.
 If you would like to have it as well, please follow the steps:
 
-1. Install Node v16 and Pyhon 3.7 (check out official docs)
+1. Install Node v16 and Pyhon 3.7 (use official documentation)
 2. Install AWS CDK
     ```
     npm install -g aws-cdk
@@ -43,13 +43,13 @@ If you would like to have it as well, please follow the steps:
     ```
     cd aws && cdk deploy
     ```
-    `NOTE:` If you receive an error from S3 try to update `STACK_PREFIX` variable from the step above so there will be a unique S3 bucket name
+    <b>NOTE:</b> If you receive an error from S3 try to update `STACK_PREFIX` variable from the step above so there will be a unique S3 bucket name
 8. Rename `frontend/.env.example` to `frontend/.env`, open it and update values inside using the output from the previous step:
     ```
     REACT_APP_STAGE=prod
     REACT_APP_APPSYNC_API_KEY=<AppsyncGraphQLApiKey value>
     ```
-9. Set S3 bucken name environment variable from the `7` step output:
+9. Set S3 bucken name environment variable using a value from the 7 step output:
     ```
     # Linux
     export AWS_S3_BUCKET_NAME=<WebsiteS3BucketName value>
@@ -102,10 +102,7 @@ To deploy your own AWS stack just follow steps `5-7` from the [Self-Hosted secti
 
 1. Open `shared/config.ts` and set `MAIN_DOMAIN=""`
 2. Open `aws/config.js`, set `ROOT_HOSTED_ZONE_ID=""`
-3. Deploy API to AWS
-    ```
-    cd aws && cdk deploy
-    ```
+3. Deploy API to AWS ``` cd aws && cdk deploy ```
 4. The deployment output will contain website and API URLs which you can use to configure the frontend
 
 Please check out `aws/README.md` to get more info and see commands list.
