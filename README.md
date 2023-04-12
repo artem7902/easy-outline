@@ -33,9 +33,6 @@ If you would like to have it as well, please follow the steps:
 
     ```
     npm i
-    cd shared && npm i 
-    cd aws && npm i 
-    cd frontend && npm i 
     ```
 5. Open `shared/config.ts` and update `MAIN_DOMAIN` variable with your domain name (should be added to AWS Route53)
 6. Open `aws/config.js`, update `ROOT_HOSTED_ZONE_ID` variable with a value from Route53 and `STACK_PREFIX` variable with some value (you may use part of your domain name).
@@ -83,7 +80,7 @@ Just follow steps `1-4` from the [Self-Hosted section](#self-hosted) with `STAGE
 
 ### React App 
 
-To start the react app in dev mode using the default configuration: 
+To start the React app in dev mode using the default configuration: 
 1. Rename `frontend/.env.example` to `frontend/.env`
 2. Run ``` cd frontend && npm start ```
 

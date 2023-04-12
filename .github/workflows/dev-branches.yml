@@ -20,6 +20,12 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: 16
+        cache: 'npm'
+        cache-dependency-path: |
+          package-lock.json
+          aws/package-lock.json
+          frontend/package-lock.json
+          shared/package-lock.json
     - uses: actions/setup-python@v4
       with:
         python-version: '3.7' 
@@ -31,10 +37,7 @@ jobs:
       run: npm install -g aws-cdk
     - name: Install NPM dependencies
       run: |
-        cd $GITHUB_WORKSPACE && npm install
-        cd $GITHUB_WORKSPACE/shared && npm install
-        cd $GITHUB_WORKSPACE/aws && npm install
-        cd $GITHUB_WORKSPACE/frontend && npm install
+        cd $GITHUB_WORKSPACE && npm run ci-all
     - name: Build AWS infrastructure
       run: |
         cd $GITHUB_WORKSPACE/aws && cdk synth

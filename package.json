@@ -6,6 +6,8 @@
   },
   "scripts": {
     "prepare": "husky install",
-    "format": "cd aws && npm run format && cd ../frontend && npm run format"
+    "format": "cd aws && npm run format && cd ../frontend && npm run format",
+    "postinstall": "cd shared && npm i && cd ../aws && npm i && cd ../frontend && npm i",
+    "ci-all": "npm ci && cd shared && npm ci && cd ../aws && npm ci && cd ../frontend && npm ci"
   }
 }
