@@ -20,9 +20,23 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: 16
+        cache: 'npm'
+        cache-dependency-path: |
+          package-lock.json
+          aws/package-lock.json
+          frontend/package-lock.json
+          shared/package-lock.json
     - uses: actions/setup-python@v4
       with:
         python-version: '3.7' 
+    - name: Cache CDK output
+      uses: actions/cache@v3
+      env:
+        cache-name: cache-cdk-output
+      with:
+        path: |
+          aws/cdk.out
+        key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('aws/lambda/requirements.txt') }}
     - name: Git config
       run: |
         git config --global user.name 'Github Actions'
@@ -31,10 +45,7 @@ jobs:
       run: npm install -g aws-cdk
     - name: Install NPM dependencies
       run: |
-        cd $GITHUB_WORKSPACE && npm install
-        cd $GITHUB_WORKSPACE/shared && npm install
-        cd $GITHUB_WORKSPACE/aws && npm install
-        cd $GITHUB_WORKSPACE/frontend && npm install
+        cd $GITHUB_WORKSPACE && npm run ci-all
     - name: Build AWS infrastructure
       run: |
         cd $GITHUB_WORKSPACE/aws && cdk synth

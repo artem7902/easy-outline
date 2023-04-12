@@ -16,9 +16,23 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: 16
+        cache: 'npm'
+        cache-dependency-path: |
+          package-lock.json
+          aws/package-lock.json
+          frontend/package-lock.json
+          shared/package-lock.json    
     - uses: actions/setup-python@v4
       with:
         python-version: '3.7' 
+    - name: Cache CDK output
+      uses: actions/cache@v3
+      env:
+        cache-name: cache-cdk-output
+      with:
+        path: |
+          aws/cdk.out
+        key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('aws/lambda/requirements.txt') }}
     - name: Install AWS CDK
       run: npm install -g aws-cdk
     - name: Set Dev Stage
@@ -32,10 +46,8 @@ jobs:
         echo "STAGE=prod" >> $GITHUB_ENV
         echo "REACT_APP_STAGE=prod" >> $GITHUB_ENV
     - name: Install NPM dependencies
-      run: |
-        cd $GITHUB_WORKSPACE/shared && npm install
-        cd $GITHUB_WORKSPACE/aws && npm install
-        cd $GITHUB_WORKSPACE/frontend && npm install
+      run: |  
+        cd $GITHUB_WORKSPACE && npm run ci-all
     - name: Deploy AWS infrastructure
       run: |
         cd $GITHUB_WORKSPACE/aws && cdk deploy --outputs-file ./cdk.out/cdk-outputs.json --require-approval never
