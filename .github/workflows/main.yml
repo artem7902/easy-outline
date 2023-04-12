@@ -31,16 +31,8 @@ jobs:
         cache-name: cache-cdk-output
       with:
         path: |
-          $GITHUB_WORKSPACE/aws/cdk.out
+          aws/cdk.out
         key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('aws/lambda/requirements.txt') }}
-    - name: Cache Docker
-      uses: actions/cache@v3
-      env:
-        cache-name: cache-docker
-      with:
-        path: |
-          /var/lib/docker
-        key: ${{ runner.os }}-${{ env.cache-name }}
     - name: Install AWS CDK
       run: npm install -g aws-cdk
     - name: Set Dev Stage

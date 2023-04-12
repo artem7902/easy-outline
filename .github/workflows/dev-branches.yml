@@ -35,16 +35,8 @@ jobs:
         cache-name: cache-cdk-output
       with:
         path: |
-          $GITHUB_WORKSPACE/aws/cdk.out
+          aws/cdk.out
         key: ${{ runner.os }}-${{ env.cache-name }}-${{ hashFiles('aws/lambda/requirements.txt') }}
-    - name: Cache Docker
-      uses: actions/cache@v3
-      env:
-        cache-name: cache-docker
-      with:
-        path: |
-          /var/lib/docker
-        key: ${{ runner.os }}-${{ env.cache-name }}
     - name: Git config
       run: |
         git config --global user.name 'Github Actions'

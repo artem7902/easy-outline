@@ -32,7 +32,7 @@ If you would like to have it as well, please follow the steps:
 4. Install npm packages
 
     ```
-    npm i
+    npm install-all
     ```
 5. Open `shared/config.ts` and update `MAIN_DOMAIN` variable with your domain name (should be added to AWS Route53)
 6. Open `aws/config.js`, update `ROOT_HOSTED_ZONE_ID` variable with a value from Route53 and `STACK_PREFIX` variable with some value (you may use part of your domain name).
