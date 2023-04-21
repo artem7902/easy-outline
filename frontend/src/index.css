@@ -22,9 +22,12 @@ code {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-/* ToDo cleanup */
 .ck.ck-editor__editable_inline{
-  padding-left: 7.5px;
+  padding-left: 7px;
   padding-right: 7.5px;
-  margin-top: 12px;
+  margin-top: 7px;
+}
+
+.ck.ck-editor__editable_inline *:first-child{
+  margin-top: 8px;
 }

@@ -10,7 +10,6 @@ import "@config/api";
 
 //css
 import "react-toastify/dist/ReactToastify.css";
-import "react-perfect-scrollbar/dist/css/styles.css";
 
 const App: React.FC = () => {
   return (
