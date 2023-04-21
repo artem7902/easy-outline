@@ -17,8 +17,6 @@ import Mark from "mark.js";
 
 import _ from "lodash";
 
-import PerfectScrollbar from "react-perfect-scrollbar";
-
 // @ts-ignore
 import { ERROR_MESSAGES, SUCCESS_MESSAGES } from "@config/constants";
 
@@ -324,15 +322,13 @@ const Article = () => {
     );
 
     return (
-      <PerfectScrollbar className={classes.articleWrapper}>
-        <Container maxWidth="xl">
-          {renderTitle}
-          {renderSource}
-          {renderButtonsPannel}
-          {renderOutlineMode}
-          {renderArticleEditor}
-        </Container>
-      </PerfectScrollbar>
+      <Container className={classes.articleWrapper} maxWidth="xl">
+        {renderTitle}
+        {renderSource}
+        {renderButtonsPannel}
+        {renderOutlineMode}
+        {renderArticleEditor}
+      </Container>
     );
   }, [
     bodyRef,
