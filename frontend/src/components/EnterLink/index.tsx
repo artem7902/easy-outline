@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { Box, TextField } from "@mui/material";
+import { Box, Grid, TextField } from "@mui/material";
 import LoadingButton from "@mui/lab/LoadingButton";
 import { makeStyles } from "tss-react/mui";
 import validator from "validator";
@@ -37,12 +37,27 @@ const useStyles = makeStyles()((theme) => ({
     display: "flex",
     justifyContent: "center",
   },
+  formGrid: {
+    display: "flex",
+    [theme.breakpoints.down("md")]: {
+      flexDirection: "column",
+    },
+    [theme.breakpoints.down("sm")]: {
+      width: "100%",
+    },
+  },
   urlInput: {
     width: 500,
+    [theme.breakpoints.down("sm")]: {
+      width: `calc(100% - ${theme.spacing(4)})`,
+    },
   },
   createOutlineButton: {
     marginLeft: theme.spacing(2),
     height: 56,
+    [theme.breakpoints.down("md")]: {
+      marginTop: theme.spacing(2),
+    },
   },
 }));
 
@@ -87,6 +102,39 @@ const EnterLink = () => {
     }
   }, [isAddingArticle, addArticleResult, addArticleError, navigate]);
 
+  const renderLoadingButton = (
+    <Grid item textAlign={"center"} md={6} xs={12}>
+      <LoadingButton
+        className={classes.createOutlineButton}
+        size="large"
+        variant="contained"
+        onClick={onCreateOutlineClick}
+        loading={isAddingArticle}
+        disabled={isAddingArticle || !isArticleUrlValid || !articleUrl}
+      >
+        Create Outline
+      </LoadingButton>
+    </Grid>
+  );
+
+  const renderUrlInput = (
+    <Grid item textAlign={"center"} md={6} xs={12}>
+      <TextField
+        className={classes.urlInput}
+        label="Instert article URL here"
+        variant="outlined"
+        value={articleUrl}
+        onChange={onUrlFieldChange}
+        autoFocus
+        error={!isArticleUrlValid}
+        disabled={isAddingArticle}
+        helperText={
+          !isArticleUrlValid && VALIDATION_RULES.articleUrl.errorMessage
+        }
+      />
+    </Grid>
+  );
+
   return (
     <div className={classes.root}>
       <Logo className={classes.logo} />
@@ -96,29 +144,10 @@ const EnterLink = () => {
         noValidate
         autoComplete="off"
       >
-        <TextField
-          className={classes.urlInput}
-          label="Instert article URL here"
-          variant="outlined"
-          value={articleUrl}
-          onChange={onUrlFieldChange}
-          autoFocus
-          error={!isArticleUrlValid}
-          disabled={isAddingArticle}
-          helperText={
-            !isArticleUrlValid && VALIDATION_RULES.articleUrl.errorMessage
-          }
-        />
-        <LoadingButton
-          className={classes.createOutlineButton}
-          size="large"
-          variant="contained"
-          onClick={onCreateOutlineClick}
-          loading={isAddingArticle}
-          disabled={isAddingArticle || !isArticleUrlValid || !articleUrl}
-        >
-          Create Outline
-        </LoadingButton>
+        <Grid className={classes.formGrid}>
+          {renderUrlInput}
+          {renderLoadingButton}
+        </Grid>
       </Box>
     </div>
   );

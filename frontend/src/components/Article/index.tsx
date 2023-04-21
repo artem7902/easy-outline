@@ -5,27 +5,8 @@ import React, {
   useRef,
   useState,
 } from "react";
-import {
-  Button,
-  CircularProgress,
-  Container,
-  Divider,
-  Grid,
-  IconButton,
-  Link,
-  Slide,
-  TextField,
-  Typography,
-} from "@mui/material";
-import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
-import ContentCopyIcon from "@mui/icons-material/ContentCopy";
-import EditIcon from "@mui/icons-material/Edit";
-import { LoadingButton } from "@mui/lab";
+import { Container, Link, Typography } from "@mui/material";
 import clsx from "clsx";
-
-import { CKEditor } from "@ckeditor/ckeditor5-react";
-//@ts-ignore
-import Editor from "ckeditor5-custom-build/build/ckeditor";
 
 import { toast } from "react-toastify";
 import { useParams } from "react-router-dom";
@@ -48,19 +29,26 @@ import { useArticle, useSaveArticle, useUpdatedArticleSub } from "@api/index";
 import { dom } from "@utils";
 
 import { Header } from "./Header";
+import ArticleButtonsPannel from "./ButtonsPannel";
+import ArticleSaveButton from "./SaveButton";
+import ArticleEditor from "./Editor";
+import ArticleShare from "./Share";
+
+import { ArticleMode } from "./models";
+import ArticleLoading from "./Loading";
 
 const useStyles = makeStyles()((theme) => ({
   hidden: {
     display: "none",
   },
-  loadingWrapper: {
-    display: "flex",
-    justifyContent: "center",
-    marginTop: "20%",
-  },
   articleWrapper: {
-    paddingTop: 100,
-    height: "calc(100vh - 64px)",
+    height: "auto",
+    minHeight: "100%",
+    paddingTop: theme.spacing(12),
+    paddingBottom: theme.spacing(10),
+    [theme.breakpoints.down("lg")]: {
+      paddingBottom: theme.spacing(15),
+    },
   },
   title: {
     textAlign: "center",
@@ -69,16 +57,16 @@ const useStyles = makeStyles()((theme) => ({
     textAlign: "center",
   },
   sourceWrapper: {
+    marginTop: theme.spacing(2),
     textAlign: "center",
   },
-  articleButtonsPannel: {
-    display: "flex",
-    justifyContent: "right",
-  },
   articleBody: {
-    marginTop: 27, // ToDo cleanup
+    marginTop: theme.spacing(2),
     paddingLeft: theme.spacing(1),
     paddingRight: theme.spacing(1),
+    "*:first-child": {
+      marginTop: 0,
+    },
   },
   outlinedText: {
     backgroundColor: "white",
@@ -89,31 +77,6 @@ const useStyles = makeStyles()((theme) => ({
       backgroundColor: "rgb(0 90 255 / 15%)",
     },
   },
-  saveButtonWrapper: {
-    width: "100%",
-    position: "fixed",
-    display: "flex",
-    justifyContent: "center",
-    zIndex: 2,
-    top: theme.spacing(8),
-  },
-  saveButton: {
-    width: "100%",
-    zIndex: 1500,
-  },
-  shareBlock: {
-    display: "flex",
-    justifyContent: "center",
-    paddingTop: theme.spacing(2),
-    paddingLeft: theme.spacing(3),
-    paddingRight: theme.spacing(3),
-  },
-  readUrl: {
-    width: "100%",
-  },
-  writeUrl: {
-    width: "100%",
-  },
 }));
 
 const Article = () => {
@@ -121,7 +84,7 @@ const Article = () => {
   const { classes } = useStyles();
 
   const bodyRef = useRef<HTMLDivElement | null>(null);
-  const editorRef = useRef<Editor | null>();
+  const editorRef = useRef<any | null>();
   const markRef = useRef<Mark | null>(null);
 
   const { articleId, secretId } = useParams<{
@@ -140,7 +103,7 @@ const Article = () => {
   const [currentHtml, setCurrentHtml] = useState<string>();
   const [originalHtml, setOriginalHtml] = useState<string>();
 
-  const [isEditMode, setIsEditMode] = useState<boolean>();
+  const [mode, setMode] = useState<ArticleMode>(ArticleMode.Outline);
 
   const [article, setArticle] = useState<IArticle>();
 
@@ -153,15 +116,6 @@ const Article = () => {
       });
     }
   }, [currentHtml, articleId, secretId, saveArticle]);
-
-  const onShareUrlButtonClick = useCallback((url: string) => {
-    toast("The URL copied to clipboard", {
-      type: "info",
-      className: "toast-notification",
-      position: "bottom-center",
-    });
-    navigator.clipboard.writeText(url);
-  }, []);
 
   const onMouseUp = useCallback(async () => {
     if (bodyRef.current && markRef.current && window.getSelection) {
@@ -322,17 +276,13 @@ const Article = () => {
     return !htmlEqual(originalHtml, currentHtml);
   }, [originalHtml, currentHtml, htmlEqual]);
 
-  // Article block render start
-  const renderTitle = useMemo(() => {
-    return article?.title ? (
+  const renderBody = useMemo(() => {
+    const renderTitle = article?.title && (
       <Typography className={classes.title} variant={"h6"}>
         {article.title}
       </Typography>
-    ) : undefined;
-  }, [article?.title, classes.title]);
-
-  const renderSource = useMemo(() => {
-    return article?.sourceUrl ? (
+    );
+    const renderSource = article?.sourceUrl && (
       <div className={classes.sourceWrapper}>
         <Link
           target="_blank"
@@ -343,217 +293,87 @@ const Article = () => {
           Source
         </Link>
       </div>
-    ) : undefined;
-  }, [article?.sourceUrl, classes.source, classes.sourceWrapper]);
-
-  const renderArticle = useMemo(() => {
-    const renderArticleButtonsPannel = secretId && (
-      <div className={classes.articleButtonsPannel}>
-        {!isEditMode ? (
-          <Button
-            startIcon={<EditIcon />}
-            onClick={() => setIsEditMode(true)}
-            aria-label="edit"
-            variant="contained"
-            color="primary"
-          >
-            Switch To Edit Mode
-          </Button>
-        ) : (
-          <Button
-            startIcon={<AutoFixHighIcon />}
-            onClick={() => setIsEditMode(false)}
-            aria-label="outline"
-            variant="contained"
-            color="primary"
-          >
-            Switch To Outline Mode
-          </Button>
-        )}
-      </div>
     );
 
     const renderOutlineMode = (
       <div
         ref={bodyRef}
         className={clsx(classes.articleBody, {
-          [classes.hidden]: isEditMode,
+          [classes.hidden]: mode !== ArticleMode.Outline,
         })}
       ></div>
     );
 
-    const renderEditorMode = article && secretId && (
-      <div className={clsx({ [classes.hidden]: !isEditMode })}>
-        <CKEditor
-          config={{
-            language: {
-              ui: "en",
-              content: article?.lang,
-            },
-          }}
-          ref={(ref) => {
-            editorRef.current = ref?.editor;
-          }}
-          editor={Editor}
-          data={bodyRef.current?.innerHTML}
-          onChange={(event, editor) => {
-            const data = editor.data.get();
-            setCurrentHtml(data);
-          }}
-          disabled={!secretId || !isEditMode}
-        />
-      </div>
+    const renderButtonsPannel = secretId && (
+      <ArticleButtonsPannel
+        secretId={secretId}
+        mode={mode}
+        changeModeCallback={setMode}
+      />
     );
+
+    const renderArticleEditor = secretId && (
+      <ArticleEditor
+        ref={editorRef}
+        secretId={secretId}
+        html={bodyRef.current?.innerHTML}
+        mode={mode}
+        lang={article?.lang}
+        onChangeCallback={setCurrentHtml}
+      />
+    );
+
     return (
-      <PerfectScrollbar>
-        <Container className={classes.articleWrapper} maxWidth="xl">
+      <PerfectScrollbar className={classes.articleWrapper}>
+        <Container maxWidth="xl">
           {renderTitle}
           {renderSource}
-          {renderArticleButtonsPannel}
+          {renderButtonsPannel}
           {renderOutlineMode}
-          {renderEditorMode}
+          {renderArticleEditor}
         </Container>
       </PerfectScrollbar>
     );
   }, [
-    renderTitle,
-    renderSource,
     bodyRef,
-    isEditMode,
+    mode,
+    setMode,
+    setCurrentHtml,
     secretId,
     article,
+    classes.source,
+    classes.title,
+    classes.sourceWrapper,
     classes.articleBody,
     classes.articleWrapper,
-    classes.articleButtonsPannel,
     classes.hidden,
   ]);
-  // Article block render end
 
-  // Share block render start
-  const renderReadUrlField = useMemo(() => {
-    if (!articleId) return;
-    const readUrl = `${window.location.protocol}//${window.location.host}/articles/${articleId}`;
-    return (
-      <TextField
-        className={classes.readUrl}
-        label="Read URL"
-        variant="outlined"
-        value={readUrl}
-        size="small"
-        InputProps={{
-          endAdornment: (
-            <IconButton
-              onClick={(e) => {
-                e.stopPropagation();
-                onShareUrlButtonClick(readUrl);
-              }}
-              size="small"
-            >
-              <ContentCopyIcon />
-            </IconButton>
-          ),
-        }}
-      />
-    );
-  }, [articleId, onShareUrlButtonClick, classes.readUrl]);
+  const renderLoading = <ArticleLoading loading={isGettingArticle} />;
 
-  const renderWriteUrlField = useMemo(() => {
-    if (!secretId) return;
-    const writeUrl = `${window.location.protocol}//${window.location.host}/articles/${articleId}/${secretId}`;
-    return (
-      <TextField
-        className={classes.writeUrl}
-        label="Read/Write URL"
-        variant="outlined"
-        value={writeUrl}
-        size="small"
-        InputProps={{
-          endAdornment: (
-            <IconButton
-              onClick={(e) => {
-                e.stopPropagation();
-                onShareUrlButtonClick(writeUrl);
-              }}
-              size="small"
-            >
-              <ContentCopyIcon />
-            </IconButton>
-          ),
-        }}
-      />
-    );
-  }, [articleId, secretId, onShareUrlButtonClick, classes.writeUrl]);
+  const renderSaveButton = secretId && (
+    <ArticleSaveButton
+      show={isArticleChanged}
+      disabled={isSavingArticle}
+      loading={isSavingArticle}
+      onClick={onSaveButtonClick}
+    />
+  );
 
-  const renderSharedBlock = useMemo(() => {
-    if (!article) return <></>;
-    return (
-      <>
-        <Divider />
-        <Grid className={classes.shareBlock} container spacing={1}>
-          <Grid item xs={6}>
-            {renderReadUrlField}
-          </Grid>
-          {renderWriteUrlField && (
-            <Grid item xs={6}>
-              {renderWriteUrlField}
-            </Grid>
-          )}
-        </Grid>
-      </>
-    );
-  }, [renderReadUrlField, renderWriteUrlField, article, classes.shareBlock]);
-  // Share block render end
-
-  const renderLoadingBlock = useMemo(() => {
-    return isGettingArticle ? (
-      <div className={classes.loadingWrapper}>
-        <CircularProgress variant="indeterminate" />{" "}
-      </div>
-    ) : (
-      <></>
-    );
-  }, [isGettingArticle, classes.loadingWrapper]);
-
-  const renderSaveButton = useMemo(() => {
-    return secretId ? (
-      <Slide direction="down" in={isArticleChanged} mountOnEnter unmountOnExit>
-        <Grid className={classes.saveButtonWrapper}>
-          <LoadingButton
-            className={classes.saveButton}
-            variant="contained"
-            color={"primary"}
-            size="small"
-            onClick={onSaveButtonClick}
-            loading={isSavingArticle}
-            disabled={isSavingArticle}
-          >
-            Save Changes
-          </LoadingButton>
-        </Grid>
-      </Slide>
-    ) : (
-      <></>
-    );
-  }, [
-    secretId,
-    isArticleChanged,
-    isSavingArticle,
-    onSaveButtonClick,
-    classes.saveButton,
-    classes.saveButtonWrapper,
-  ]);
+  const renderShare = articleId && (
+    <ArticleShare articleId={articleId} secretId={secretId} />
+  );
 
   // Main render
   return (
     <>
       <Header />
-      {isGettingArticle ? (
-        <> {renderLoadingBlock}</>
-      ) : (
+      {renderLoading}
+      {!isGettingArticle && (
         <>
           {renderSaveButton}
-          {renderArticle}
-          {renderSharedBlock}
+          {renderBody}
+          {renderShare}
         </>
       )}
     </>
