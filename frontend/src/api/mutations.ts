@@ -35,3 +35,11 @@ export const updateArticle = gql`
     }
   }
 `;
+
+export const deleteArticle = gql`
+  mutation Mutation($id: String!, $secretId: String!) {
+    deleteArticle(id: $id, secretId: $secretId) {
+      id
+    }
+  }
+`;

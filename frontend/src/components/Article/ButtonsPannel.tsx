@@ -5,60 +5,71 @@ import EditIcon from "@mui/icons-material/Edit";
 
 import { makeStyles } from "tss-react/mui";
 
+import ArticleDeleteDialog from "./DeleteDialog";
 import { ArticleMode } from "./models";
 
 interface IArticleButtonPannelProps {
+  articleId: string;
   secretId: string;
   mode: ArticleMode;
-  changeModeCallback: (mode: ArticleMode) => void;
+  onChangeModeCallback: (mode: ArticleMode) => void;
 }
 
 const useStyles = makeStyles()((theme) => ({
   pannelWrapper: {
     display: "flex",
+    gap: theme.spacing(1),
     justifyContent: "right",
     marginTop: theme.spacing(2),
   },
 }));
 
 const ArticleButtonsPannel = ({
+  articleId,
   secretId,
   mode,
-  changeModeCallback,
+  onChangeModeCallback,
 }: IArticleButtonPannelProps) => {
   // Styles
   const { classes } = useStyles();
 
   const onSwitchMode =
     mode === ArticleMode.Edit ? ArticleMode.Outline : ArticleMode.Edit;
-
-  const buttonIcon =
+  const modeButtonIcon =
     onSwitchMode === ArticleMode.Edit ? <EditIcon /> : <AutoFixHighIcon />;
-  const buttonLabel = `Switch To ${onSwitchMode} Mode`;
+  const modeButtonLabel = `Switch To ${onSwitchMode} Mode`;
+  const renderModeButton = (
+    <>
+      <Hidden mdUp>
+        <IconButton
+          color="primary"
+          onClick={() => onChangeModeCallback(onSwitchMode)}
+        >
+          {modeButtonIcon}
+        </IconButton>
+      </Hidden>
+      <Hidden mdDown>
+        <Button
+          startIcon={modeButtonIcon}
+          onClick={() => onChangeModeCallback(onSwitchMode)}
+          aria-label={mode}
+          variant="contained"
+          color="primary"
+        >
+          {modeButtonLabel}
+        </Button>
+      </Hidden>
+    </>
+  );
+
+  const renderDeleteDialog = (
+    <ArticleDeleteDialog articleId={articleId} secretId={secretId} />
+  );
 
   return secretId ? (
     <div className={classes.pannelWrapper}>
-      <>
-        <Hidden mdUp>
-          <IconButton
-            color="primary"
-            onClick={() => changeModeCallback(onSwitchMode)}
-          >
-            {buttonIcon}
-          </IconButton>
-        </Hidden>
-        <Hidden mdDown>
-          <Button
-            startIcon={buttonIcon}
-            onClick={() => changeModeCallback(onSwitchMode)}
-            aria-label={mode}
-            variant="contained"
-            color="primary"
-          >
-            {buttonLabel}
-          </Button>
-        </Hidden>
-      </>
+      {renderDeleteDialog}
+      {renderModeButton}
     </div>
   ) : (
     <></>

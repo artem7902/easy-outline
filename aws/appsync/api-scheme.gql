@@ -16,6 +16,7 @@ type Subscription {
 type Mutation {
     addArticle(url: String!): OutlineSecretRecord
     updateArticle(id: String!, secretId: String!, html: String!): OutlineRecord
+    deleteArticle(id: String!, secretId: String!): OutlineRecord
 }
 
 type Article {
