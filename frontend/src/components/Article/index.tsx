@@ -22,11 +22,7 @@ import { ERROR_MESSAGES, SUCCESS_MESSAGES } from "@config/constants";
 
 import { IArticle } from "@models/api/IArticle";
 
-import {
-  useArticle,
-  useSaveArticle,
-  useUpdatedArticleSub,
-} from "@api/index";
+import { useArticle, useSaveArticle, useUpdatedArticleSub } from "@api/index";
 
 import { dom } from "@utils";
 
