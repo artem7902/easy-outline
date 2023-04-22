@@ -302,11 +302,12 @@ const Article = () => {
       ></div>
     );
 
-    const renderButtonsPannel = secretId && (
+    const renderButtonsPannel = articleId && secretId && (
       <ArticleButtonsPannel
+        articleId={articleId}
         secretId={secretId}
         mode={mode}
-        changeModeCallback={setMode}
+        onChangeModeCallback={setMode}
       />
     );
 
@@ -335,6 +336,7 @@ const Article = () => {
     mode,
     setMode,
     setCurrentHtml,
+    articleId,
     secretId,
     article,
     classes.source,

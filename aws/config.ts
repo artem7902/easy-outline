@@ -20,7 +20,8 @@ export default (stage: string) => {
                     getPublicArticle: `${__dirname}/appsync/resolver-templates-json/get-public-article-request.json`
                 },
                 mutation: {
-                    updateArticle: `${__dirname}/appsync/resolver-templates-json/update-article-request.json`
+                    updateArticle: `${__dirname}/appsync/resolver-templates-json/update-article-request.json`,
+                    deleteArticle: `${__dirname}/appsync/resolver-templates-json/delete-article-request.json`
                 }
             }
         },

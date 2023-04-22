@@ -10,6 +10,7 @@ import { IGetPublicArticleResponse } from "@models/api/responses/IGetPublicArtic
 import { IUpdateArticleResponse } from "@models/api/responses/IUpdateArticleResponse";
 import { IAddArticleResponse } from "@models/api/responses/IAddArticleResponse";
 import { IUpdatedArticleSubResponse } from "@models/api/responses/IUpdatedArticleSubResponse";
+import { IDeleteArticleResponse } from "@models/api/responses/IDeleteArticleResponse";
 
 export const useArticle = (articleId?: string) => {
   const {
@@ -87,5 +88,25 @@ export const useUpdatedArticleSub = (id?: string) => {
   return {
     updatedArticleSubResult: data?.updatedArticle.article,
     error,
+  };
+};
+
+export const useDeleteArticle = () => {
+  const {
+    trigger: deleteArticle,
+    data,
+    isMutating: isDeletingArticle,
+    error: deleteArticleError,
+  } = useSWRMutation<
+    IDeleteArticleResponse,
+    any,
+    any,
+    { id: string; secretId: string }
+  >(gqlMutations.deleteArticle, gqlMutator);
+  return {
+    deleteArticle,
+    isDeletingArticle,
+    deleteArticleResult: data?.deleteArticle,
+    deleteArticleError,
   };
 };
