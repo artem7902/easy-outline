@@ -1,4 +1,8 @@
 const constants = {
+  article: {
+    tabTitle: (articleTitle?: string) =>
+      articleTitle && `${articleTitle} | Easy Outline - highlight and share`,
+  },
   deleteDialog: {
     title: "Delete confirmation",
     body: `Clicking the delete button will result in article being deleted from the database.
