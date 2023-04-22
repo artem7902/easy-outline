@@ -8,6 +8,8 @@ import React, {
 import { Container, Link, Typography } from "@mui/material";
 import clsx from "clsx";
 
+import { Helmet } from "react-helmet";
+
 import { toast } from "react-toastify";
 import { useParams } from "react-router-dom";
 
@@ -17,7 +19,6 @@ import Mark from "mark.js";
 
 import _ from "lodash";
 
-// @ts-ignore
 import { ERROR_MESSAGES, SUCCESS_MESSAGES } from "@config/constants";
 
 import { IArticle } from "@models/api/IArticle";
@@ -31,9 +32,10 @@ import ArticleButtonsPannel from "./ButtonsPannel";
 import ArticleSaveButton from "./SaveButton";
 import ArticleEditor from "./Editor";
 import ArticleShare from "./Share";
+import ArticleLoading from "./Loading";
 
 import { ArticleMode } from "./models";
-import ArticleLoading from "./Loading";
+import constants from "./constants";
 
 const useStyles = makeStyles()((theme) => ({
   hidden: {
@@ -365,6 +367,9 @@ const Article = () => {
   // Main render
   return (
     <>
+      <Helmet>
+        <title>{constants.article.tabTitle(article?.title)}</title>
+      </Helmet>
       <Header />
       {renderLoading}
       {!isGettingArticle && (
