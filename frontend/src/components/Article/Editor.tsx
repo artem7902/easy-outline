@@ -1,4 +1,4 @@
-import React, { forwardRef } from "react";
+import React, { forwardRef, useRef } from "react";
 
 import { CKEditor } from "@ckeditor/ckeditor5-react";
 //@ts-ignore
@@ -32,6 +32,9 @@ const ArticleEditor = forwardRef(
     // Styles
     const { classes } = useStyles();
 
+    // typing timeout Ref for performance optimization
+    const typingTimeout = useRef<number | null>(null);
+
     return (
       <div className={clsx({ [classes.hidden]: mode !== ArticleMode.Edit })}>
         <CKEditor
@@ -49,8 +52,13 @@ const ArticleEditor = forwardRef(
           editor={Editor}
           data={html}
           onChange={(event, editor) => {
-            const data = editor.data.get();
-            onChangeCallback(data);
+            if (typingTimeout.current) {
+              window.clearTimeout(typingTimeout.current);
+            }
+            typingTimeout.current = window.setTimeout(() => {
+              const data = editor.data.get();
+              onChangeCallback(data);
+            }, 300);
           }}
           disabled={!secretId || mode !== ArticleMode.Edit}
         />
