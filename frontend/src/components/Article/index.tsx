@@ -87,6 +87,9 @@ const Article = () => {
   const editorRef = useRef<any | null>();
   const markRef = useRef<Mark | null>(null);
 
+  const touchInterval = useRef<number | null>(null);
+  const lastSelectionRangesRef = useRef<Range[]>([]);
+
   const { articleId, secretId } = useParams<{
     articleId: string;
     secretId?: string;
@@ -185,6 +188,34 @@ const Article = () => {
     }
   }, [classes.outlinedText]);
 
+  const onTouchStart = useCallback(async () => {
+    if (touchInterval.current) {
+      window.clearInterval(touchInterval.current);
+    }
+    // Get initial ranges
+    lastSelectionRangesRef.current = dom.getSelectionRanges(
+      window.getSelection()
+    );
+    // Setup ranges check interval
+    touchInterval.current = window.setInterval(() => {
+      const currentRanges = dom.getSelectionRanges(window.getSelection());
+      if (
+        dom.isSelectionRangesEqual(
+          currentRanges,
+          lastSelectionRangesRef.current
+        )
+      ) {
+        if (touchInterval.current) {
+          window.clearInterval(touchInterval.current);
+          touchInterval.current = null;
+        }
+        // process selected text
+        onMouseUp();
+      }
+      lastSelectionRangesRef.current = currentRanges;
+    }, 1500);
+  }, [onMouseUp]);
+
   const htmlEqual = useCallback((originalHtml: string, currentHtml: string) => {
     if (editorRef.current) {
       const editor = editorRef.current;
@@ -262,13 +293,15 @@ const Article = () => {
   useEffect(() => {
     if (secretId && bodyRef.current && article) {
       window.addEventListener("mouseup", onMouseUp);
+      window.addEventListener("touchstart", onTouchStart);
     }
     return () => {
       if (secretId) {
         window.removeEventListener("mouseup", onMouseUp);
+        window.removeEventListener("touchstart", onTouchStart);
       }
     };
-  }, [onMouseUp, secretId, article]);
+  }, [onMouseUp, onTouchStart, secretId, article]);
 
   const isArticleChanged = useMemo(() => {
     if (!originalHtml || !currentHtml) return false;

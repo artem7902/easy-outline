@@ -1,3 +1,4 @@
+import _ from "lodash";
 import Mark from "mark.js";
 
 export const getDeepChildForNodes = (childNodes: NodeListOf<Node>) => {
@@ -170,4 +171,33 @@ export const formatHtml = (html: string) => {
   fakeDiv.innerHTML = html;
   const originalHtml = fakeDiv.innerHTML;
   return originalHtml;
+};
+
+export const isSelectionRangesEqual = (aRanges: Range[], bRanges: Range[]) => {
+  if (aRanges.length !== bRanges.length) {
+    return false;
+  }
+  const notEqualRanages = aRanges.filter(
+    (a) =>
+      !bRanges.find(
+        (b) =>
+          b.startOffset === a.startOffset &&
+          b.endOffset === a.endOffset &&
+          b.startContainer === a.startContainer &&
+          b.endContainer === a.endContainer
+      )
+  );
+  return !notEqualRanages.length;
+};
+
+export const getSelectionRanges = (selection: Selection | null) => {
+  if (!selection) return [];
+  const ranges: Range[] = [];
+  for (const i of _.range(0, selection.rangeCount)) {
+    const range = selection?.getRangeAt(i);
+    if (range) {
+      ranges.push(range);
+    }
+  }
+  return ranges;
 };
