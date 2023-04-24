@@ -6,6 +6,8 @@ import { toast } from "react-toastify";
 
 import { makeStyles } from "tss-react/mui";
 
+import { format } from "@utils";
+
 interface IArticleShareProps {
   articleId: string;
   secretId?: string;
@@ -53,10 +55,8 @@ const useStyles = makeStyles()((theme) => ({
 const ArticleShare = ({ articleId, secretId }: IArticleShareProps) => {
   // Styles
   const { classes } = useStyles();
-  const readUrl = `${window.location.protocol}//${window.location.host}/articles/${articleId}`;
-  const writeUrl =
-    secretId &&
-    `${window.location.protocol}//${window.location.host}/articles/${articleId}/${secretId}`;
+  const readUrl = format.getArticleReadUrl(articleId);
+  const writeUrl = secretId && format.getArticleWriteUrl(articleId, secretId);
 
   const onShareUrlButtonClick = (url: string) => {
     toast("The URL copied to clipboard", {
