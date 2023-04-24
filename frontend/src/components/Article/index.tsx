@@ -27,6 +27,8 @@ import { useArticle, useSaveArticle, useUpdatedArticleSub } from "@api/index";
 
 import { dom } from "@utils";
 
+import { useRecentArticles } from "@hooks";
+
 import { Header } from "./Header";
 import ArticleButtonsPannel from "./ButtonsPannel";
 import ArticleSaveButton from "./SaveButton";
@@ -102,6 +104,8 @@ const Article = () => {
     useSaveArticle();
 
   const { updatedArticleSubResult } = useUpdatedArticleSub(articleId);
+
+  const { addRecentArticle } = useRecentArticles();
 
   const [currentHtml, setCurrentHtml] = useState<string>();
   const [originalHtml, setOriginalHtml] = useState<string>();
@@ -302,6 +306,16 @@ const Article = () => {
       }
     };
   }, [onMouseUp, onTouchStart, secretId, article]);
+
+  useEffect(() => {
+    if (articleId && secretId && article?.title) {
+      addRecentArticle({
+        id: articleId,
+        secretId,
+        title: article.title,
+      });
+    }
+  }, [addRecentArticle, article?.title, articleId, secretId]);
 
   const isArticleChanged = useMemo(() => {
     if (!originalHtml || !currentHtml) return false;

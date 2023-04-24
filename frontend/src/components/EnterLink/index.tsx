@@ -11,6 +11,8 @@ import { ReactComponent as Logo } from "@images/logo.svg";
 
 import { useAddArticle } from "@api/index";
 
+import RecentArticles from "./RecentArticles";
+
 const VALIDATION_RULES = {
   articleUrl: {
     errorMessage: "Please insert a valid URL",
@@ -149,6 +151,7 @@ const EnterLink = () => {
           {renderLoadingButton}
         </Grid>
       </Box>
+      <RecentArticles />
     </div>
   );
 };
