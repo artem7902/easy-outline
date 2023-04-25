@@ -142,6 +142,24 @@ export const setMarkAsNotSelected = (
   });
 };
 
+export const setMarkAsHovered = (
+  articleDiv: HTMLDivElement | null,
+  markId: string
+) => {
+  articleDiv?.querySelectorAll(`#${markId}`).forEach((n) => {
+    n.setAttribute("hovered", "true");
+  });
+};
+
+export const setMarkAsNotHovered = (
+  articleDiv: HTMLDivElement | null,
+  markId: string
+) => {
+  articleDiv?.querySelectorAll(`#${markId}[hovered]`).forEach((n) => {
+    n.removeAttribute("hovered");
+  });
+};
+
 export const unmark = (
   markjs: Mark | null,
   marks:
@@ -163,6 +181,28 @@ export const unmark = (
         })
     )
   );
+};
+
+export const setMarkColor = (
+  articleDiv: HTMLDivElement | null,
+  markId: string,
+  color: string
+) => {
+  articleDiv?.querySelectorAll(`#${markId}`).forEach((n) => {
+    (n as HTMLElement).style.textDecorationColor = color;
+  });
+};
+
+export const getMarkElementByIdAndIndex = (
+  articleDiv: HTMLDivElement | null,
+  markId: string,
+  index: string
+) => {
+  return articleDiv?.querySelectorAll(`#${markId}[data-index='${index}']`)[0];
+};
+
+export const getMarkNodeIndex = (node: HTMLElement) => {
+  return node.getAttribute("data-index") ?? "";
 };
 
 export const formatHtml = (html: string) => {
