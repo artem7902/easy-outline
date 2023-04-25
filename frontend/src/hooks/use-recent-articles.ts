@@ -1,16 +1,10 @@
 import _ from "lodash";
 
 import { useCallback } from "react";
-
-import { AppDispatch, RootState } from "@redux/store";
-import { useSelector, useDispatch, TypedUseSelectorHook } from "react-redux";
 import { useLocalStorage } from "usehooks-ts";
 
 import { serialize } from "@utils";
-
-// Use throughout your app instead of plain `useDispatch` and `useSelector`
-export const useAppDispatch: () => AppDispatch = useDispatch;
-export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
+import { MAX_RECENT_ARTICLES_NUMBER } from "@config/constants";
 
 interface IRecentArticle {
   id: string;
@@ -18,8 +12,6 @@ interface IRecentArticle {
   title: string;
   visitedAt: number;
 }
-
-const MAX_RECENT_ARTICLES_NUMBER = 5;
 
 export const useRecentArticles = () => {
   const [recentArticlesValue, setRecentArticlesValue] = useLocalStorage(
@@ -64,3 +56,5 @@ export const useRecentArticles = () => {
     addRecentArticle,
   };
 };
+
+export default useRecentArticles;
