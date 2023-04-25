@@ -19,6 +19,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import { useNavigate } from "react-router-dom";
 
 import { useDeleteArticle } from "@api";
+import { RecentArticlesContext } from "@contexts/recent-articles";
 
 import { ERROR_MESSAGES, SUCCESS_MESSAGES } from "@config/constants";
 
@@ -44,6 +45,10 @@ const ArticleDeleteDialog = ({
     deleteArticleResult,
   } = useDeleteArticle();
 
+  const { deleteRecentArticle } = React.useContext(RecentArticlesContext);
+
+  console.log("isDeletingArticle", isDeletingArticle);
+
   const [open, setOpen] = React.useState(false);
   const handleOpen = () => setOpen(true);
   const handleClose = () => !isDeletingArticle && setOpen(false);
@@ -60,13 +65,14 @@ const ArticleDeleteDialog = ({
 
   React.useEffect(() => {
     if (deleteArticleResult) {
+      deleteRecentArticle(deleteArticleResult.id);
       toast(SUCCESS_MESSAGES.ARTICLE_DELETED, {
         type: "success",
         className: "toast-notification",
       });
       navigate(`/`);
     }
-  }, [navigate, deleteArticleResult]);
+  }, [navigate, deleteArticleResult, deleteRecentArticle]);
 
   const renderOpenDialogButton = (
     <>

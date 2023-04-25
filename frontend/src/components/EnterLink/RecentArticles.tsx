@@ -2,7 +2,7 @@ import React from "react";
 import { Link, Typography } from "@mui/material";
 import { makeStyles } from "tss-react/mui";
 
-import { useRecentArticles } from "@hooks";
+import { RecentArticlesContext } from "@contexts/recent-articles";
 
 import { format } from "@utils";
 
@@ -26,7 +26,7 @@ const RecentArticles = () => {
   // Styles
   const { classes } = useStyles();
 
-  const { recentArticles } = useRecentArticles();
+  const { recentArticles } = React.useContext(RecentArticlesContext);
 
   return recentArticles.length ? (
     <div className={classes.wrapper}>

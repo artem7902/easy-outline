@@ -51,9 +51,20 @@ export const useRecentArticles = () => {
     [recentArticlesValue, setRecentArticlesValue]
   );
 
+  const deleteRecentArticle = useCallback(
+    (id: string) => {
+      const newOutlinesMap: Map<string, IRecentArticle> =
+        serialize.deserializeMap(recentArticlesValue);
+      newOutlinesMap.delete(id);
+      setRecentArticlesValue(serialize.serializeMap(newOutlinesMap));
+    },
+    [recentArticlesValue, setRecentArticlesValue]
+  );
+
   return {
     recentArticles,
     addRecentArticle,
+    deleteRecentArticle,
   };
 };
 

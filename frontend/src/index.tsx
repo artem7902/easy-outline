@@ -6,6 +6,8 @@ import { CacheProvider } from "@emotion/react";
 import createCache from "@emotion/cache";
 import { ThemeProvider } from "@mui/material/styles";
 
+import { RecentArticlesProvider } from "@contexts/recent-articles";
+
 import { theme } from "./theme";
 
 import App from "./App";
@@ -24,7 +26,9 @@ root.render(
   <Provider store={store}>
     <CacheProvider value={muiCache}>
       <ThemeProvider theme={theme}>
-        <App />
+        <RecentArticlesProvider>
+          <App />
+        </RecentArticlesProvider>
       </ThemeProvider>
     </CacheProvider>
   </Provider>

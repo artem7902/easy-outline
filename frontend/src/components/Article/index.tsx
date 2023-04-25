@@ -33,7 +33,7 @@ import { useArticle, useSaveArticle, useUpdatedArticleSub } from "@api";
 
 import { dom } from "@utils";
 
-import { useRecentArticles } from "@hooks";
+import { RecentArticlesContext } from "@contexts/recent-articles";
 
 import { Header } from "./Header";
 import ArticleButtonsPannel from "./ButtonsPannel";
@@ -108,7 +108,7 @@ const Article = () => {
     secretId?: string;
   }>();
 
-  const { addRecentArticle } = useRecentArticles();
+  const { addRecentArticle } = React.useContext(RecentArticlesContext);
 
   // API hooks
   const { getArticleResult, isGettingArticle, getArticleError } =
@@ -355,7 +355,7 @@ const Article = () => {
   }, [originalHtml, currentHtml, htmlEqual]);
 
   // Render
-  const renderBody = useMemo(() => {
+  const renderBody = (() => {
     const renderTitle = article?.title && (
       <Typography className={classes.title} variant={"h6"}>
         {article.title}
@@ -412,21 +412,7 @@ const Article = () => {
         {renderArticleEditor}
       </Container>
     );
-  }, [
-    bodyRef,
-    mode,
-    setMode,
-    setCurrentHtml,
-    articleId,
-    secretId,
-    article,
-    classes.source,
-    classes.title,
-    classes.sourceWrapper,
-    classes.articleBody,
-    classes.articleWrapper,
-    classes.hidden,
-  ]);
+  })();
 
   const renderLoading = <ArticleLoading loading={isGettingArticle} />;
 
