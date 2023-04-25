@@ -19,7 +19,11 @@ import Mark from "mark.js";
 
 import _ from "lodash";
 
-import { ERROR_MESSAGES, SUCCESS_MESSAGES } from "@config/constants";
+import {
+  DEFAULT_MARK_COLOR,
+  ERROR_MESSAGES,
+  SUCCESS_MESSAGES,
+} from "@config/constants";
 
 import { IArticle } from "@models/api/IArticle";
 
@@ -33,6 +37,7 @@ import ArticleSaveButton from "./SaveButton";
 import ArticleEditor from "./Editor";
 import ArticleShare from "./Share";
 import ArticleLoading from "./Loading";
+import MarkMenu from "./MarkMenu";
 
 import { ArticleMode } from "./models";
 import constants from "./constants";
@@ -71,8 +76,12 @@ const useStyles = makeStyles()((theme) => ({
   outlinedText: {
     backgroundColor: "white",
     textDecorationLine: "underline",
-    textDecorationColor: "red",
+    textDecorationColor: DEFAULT_MARK_COLOR,
     "&[selected]": {
+      cursor: "pointer",
+      backgroundColor: "rgb(0 90 255 / 15%)",
+    },
+    "&[hovered]": {
       cursor: "pointer",
       backgroundColor: "rgb(0 90 255 / 15%)",
     },
@@ -109,6 +118,11 @@ const Article = () => {
   const [mode, setMode] = useState<ArticleMode>(ArticleMode.Outline);
 
   const [article, setArticle] = useState<IArticle>();
+
+  const [selectedMark, setSelectedMark] = useState<{
+    id: string;
+    index: string;
+  } | null>(null);
 
   const onSaveButtonClick = useCallback(async () => {
     if (articleId && currentHtml && secretId) {
@@ -274,21 +288,36 @@ const Article = () => {
     if (bodyRef.current) {
       bodyRef.current.innerHTML = currentHtml || "";
       markRef.current?.setEventListeners({
-        onClick: async (markId) => {
+        onClick: async (markId, event) => {
           if (secretId) {
-            await dom.unmark(markRef.current, [{ id: markId }]);
-            setCurrentHtml(bodyRef.current?.innerHTML);
+            setSelectedMark({
+              id: markId,
+              index: dom.getMarkNodeIndex(event.currentTarget as HTMLElement),
+            });
           }
         },
         onMouseOver: (markId) => {
-          dom.setMarkAsSelected(bodyRef.current, markId);
+          dom.setMarkAsHovered(bodyRef.current, markId);
         },
         onMouseLeave: (markId) => {
-          dom.setMarkAsNotSelected(bodyRef.current, markId);
+          dom.setMarkAsNotHovered(bodyRef.current, markId);
         },
       });
     }
-  }, [currentHtml, secretId]);
+  }, [currentHtml, secretId, setSelectedMark]);
+
+  useEffect(() => {
+    const articleDiv = bodyRef.current;
+    if (selectedMark) {
+      dom.setMarkAsSelected(articleDiv, selectedMark.id);
+    }
+    return () => {
+      if (selectedMark) {
+        dom.setMarkAsNotSelected(articleDiv, selectedMark.id);
+        setCurrentHtml(articleDiv?.innerHTML);
+      }
+    };
+  }, [selectedMark]);
 
   useEffect(() => {
     if (secretId && bodyRef.current && article) {
@@ -397,6 +426,17 @@ const Article = () => {
     <ArticleShare articleId={articleId} secretId={secretId} />
   );
 
+  const renderMarkMenu = (
+    <MarkMenu
+      selectedMark={selectedMark}
+      articleDiv={bodyRef.current}
+      markJs={markRef.current}
+      onClose={() => {
+        setSelectedMark(null);
+      }}
+    />
+  );
+
   // Main render
   return (
     <>
@@ -409,6 +449,7 @@ const Article = () => {
         <>
           {renderSaveButton}
           {renderBody}
+          {renderMarkMenu}
           {renderShare}
         </>
       )}

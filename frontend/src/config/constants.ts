@@ -7,3 +7,5 @@ export const SUCCESS_MESSAGES = {
   ARTICLE_SAVED: "All changes were successfully saved",
   ARTICLE_DELETED: "The article was successfully deleted",
 };
+
+export const DEFAULT_MARK_COLOR = "rgb(255, 0, 0)";
