@@ -18,7 +18,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 
 import { useNavigate } from "react-router-dom";
 
-import { useDeleteArticle } from "@api/index";
+import { useDeleteArticle } from "@api";
 
 import { ERROR_MESSAGES, SUCCESS_MESSAGES } from "@config/constants";
 

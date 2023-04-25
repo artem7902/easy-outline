@@ -15,19 +15,21 @@ import { useParams } from "react-router-dom";
 
 import { makeStyles } from "tss-react/mui";
 
-import Mark from "mark.js";
-
 import _ from "lodash";
+
+import Mark from "mark.js";
 
 import {
   DEFAULT_MARK_COLOR,
   ERROR_MESSAGES,
+  HOVERED_MARK_BACKGROUND,
+  SELECTED_MARK_BACKGROUND,
   SUCCESS_MESSAGES,
 } from "@config/constants";
 
 import { IArticle } from "@models/api/IArticle";
 
-import { useArticle, useSaveArticle, useUpdatedArticleSub } from "@api/index";
+import { useArticle, useSaveArticle, useUpdatedArticleSub } from "@api";
 
 import { dom } from "@utils";
 
@@ -81,11 +83,11 @@ const useStyles = makeStyles()((theme) => ({
     textDecorationColor: DEFAULT_MARK_COLOR,
     "&[selected]": {
       cursor: "pointer",
-      backgroundColor: "rgb(0 90 255 / 15%)",
+      backgroundColor: SELECTED_MARK_BACKGROUND,
     },
     "&[hovered]": {
       cursor: "pointer",
-      backgroundColor: "rgb(0 90 255 / 15%)",
+      backgroundColor: HOVERED_MARK_BACKGROUND,
     },
   },
 }));
@@ -106,28 +108,26 @@ const Article = () => {
     secretId?: string;
   }>();
 
+  const { addRecentArticle } = useRecentArticles();
+
   // API hooks
   const { getArticleResult, isGettingArticle, getArticleError } =
     useArticle(articleId);
   const { saveArticle, saveArticleResult, isSavingArticle, saveArticleError } =
     useSaveArticle();
-
   const { updatedArticleSubResult } = useUpdatedArticleSub(articleId);
 
-  const { addRecentArticle } = useRecentArticles();
-
+  // State
   const [currentHtml, setCurrentHtml] = useState<string>();
   const [originalHtml, setOriginalHtml] = useState<string>();
-
   const [mode, setMode] = useState<ArticleMode>(ArticleMode.Outline);
-
   const [article, setArticle] = useState<IArticle>();
-
   const [selectedMark, setSelectedMark] = useState<{
     id: string;
     index: string;
   } | null>(null);
 
+  // Callbacks
   const onSaveButtonClick = useCallback(async () => {
     if (articleId && currentHtml && secretId) {
       await saveArticle({
@@ -246,6 +246,7 @@ const Article = () => {
     }
   }, []);
 
+  // Effects
   useEffect(() => {
     if (getArticleError || saveArticleError) {
       toast(ERROR_MESSAGES.BACKEND_ERROR, {
@@ -346,12 +347,14 @@ const Article = () => {
     }
   }, [addRecentArticle, article?.title, articleId, secretId]);
 
+  // Memorized values
   const isArticleChanged = useMemo(() => {
     if (!originalHtml || !currentHtml) return false;
     // just compare html code strings
     return !htmlEqual(originalHtml, currentHtml);
   }, [originalHtml, currentHtml, htmlEqual]);
 
+  // Render
   const renderBody = useMemo(() => {
     const renderTitle = article?.title && (
       <Typography className={classes.title} variant={"h6"}>

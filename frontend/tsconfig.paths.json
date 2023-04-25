@@ -5,7 +5,7 @@
         "@models/*": ["models/*"],
         "@components/*": ["components/*"],
         "@redux/*": ["redux/*"],
-        "@api/*": ["api/*"],
+        "@api": ["api"],
         "@config/*": ["config/*"],
         "@images/*": ["images/*"],
         "@hooks": ["hooks"],
